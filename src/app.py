@@ -1,5 +1,6 @@
 """Attendance module (AAM-28): faculty creates a session and marks P/A/L for each student"""
 import os
+import secrets
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -10,7 +11,8 @@ HERE = Path(__file__).parent
 EDIT_WINDOW = timedelta(hours=48)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-only-not-secret")
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)  # no fallback key in the repo
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # blocks cross-site form posts riding the session (CSRF)
 app.config["DATABASE"] = os.environ.get("DATABASE", str(HERE / "attendance.db"))
 
 
