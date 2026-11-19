@@ -9,7 +9,8 @@ __pycache__/
 
 # OS and editor
 .DS_Store
-.claude/settings.local.json
+CLAUDE.md
+.claude/
 
 # Professor's handout, keep it local
 /*.docx
