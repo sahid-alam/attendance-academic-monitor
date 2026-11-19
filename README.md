@@ -15,7 +15,7 @@ This is our 4-person Software Engineering CCA team project.
 
 ## Process model
 
-Incremental model with light Scrum habits (one-week sprints, a task board, short stand-ups), delivered in 5 increments.
+Agile Scrum with 2 sprints. Sprint 1 (19 to 22 Nov) is requirements, design and plan. Sprint 2 (23 to 26 Nov) is build and test. Submission is on 27 Nov.
 
 ## Tools
 
@@ -45,7 +45,7 @@ Use made-up data only. Never commit real student data, passwords or `.env` files
 
 ## Setup
 
-Setup steps for `src/` are coming in increment 2.
+Setup steps for `src/` are coming in Sprint 2.
 
 ## Links
 

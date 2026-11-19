@@ -96,51 +96,56 @@ The same scenario is used for:
 
 ## Stage 2: Process model
 
-**Choice:** Incremental model, run with light Scrum habits: one-week sprints, the task board and short stand-up meetings.
+**Choice:** Agile Scrum with 2 short sprints, tracked on the Jira board.
 
 **Why it fits**
-- The core requirements (attendance and marks) are well understood and unlikely to change.
-- The risk rules are the part most likely to change after feedback, so they come in a later increment.
-- S3 can deliver one working module per increment.
-- Unlike pure Scrum, it still produces the up-front SRS and design documents the CCA marks.
+- The deadline is short (19 to 27 Nov), so we need working pieces every few days, not one big delivery at the end.
+- The work splits cleanly into two halves. Sprint 1 is the documents and design, Sprint 2 is the build and testing.
+- Each sprint ends with a review and a short retro, so mistakes in the design get caught before coding starts.
+- The Jira board shows every task moving across the columns day by day. That is the tracking evidence the CCA marks.
+- We still write the SRS and the design up front, in Sprint 1, so nothing the guidelines ask for is skipped.
 
-**Increments**
-- **I1:** SRS, project setup, login, academic setup (Admin)
-- **I2:** Attendance module
-- **I3:** Internal marks module
-- **I4:** Risk engine, status workflow, interventions, dashboards
-- **I5:** Integration testing, report, presentation
+**Why not Incremental:** we first planned Incremental with 5 increments over about 6 weeks. When the 27 Nov deadline was confirmed there was no room for 5 increments, so we moved to 2 Scrum sprints.
+
+**Sprints**
+
+| Sprint | Dates | Goal |
+|---|---|---|
+| Sprint 1 | 19 to 22 Nov | Requirements, design and plan done |
+| Sprint 2 | 23 to 26 Nov | Attendance and marks working, tested, report ready |
+| Submission | 27 Nov | Final check and submit |
+
+Each sprint has planning on day 1, short daily updates on WhatsApp, and a review plus retro on the last day.
 
 ## Stage 3: Plan
 
-Weeks are counted from the start (W1, W2, ...). Turn them into calendar dates once we know the deadline.
-
 **Work breakdown structure (WBS)**
 
-| ID | Work package | Owner | Weeks | Depends on |
-|---|---|---|---|---|
-| 1 | Requirements: survey/interviews, SRS, use cases | S1 | W1 | none |
-| 2 | Planning: process model, WBS, Gantt chart, risks, board | S4 | W1 | none |
-| 3 | Design: architecture, ER diagram, DFDs, data dictionary, sequence diagram | S2 (S1) | W2 | 1 |
-| 4 | Development: attendance (W3), marks and risk logic (W4) | S3 | W3–W4 | 3 |
-| 5 | Testing: unit and functional tests, test-case table | S3 | W4–W5 | 4 |
-| 6 | Ethics table | S1, S4 | W3 | 1 |
-| 7 | Report, slides, deployment doc, rehearsal | S4 | W5–W6 | all |
+| ID | Work package | Owner | Sprint | Due | Depends on |
+|---|---|---|---|---|---|
+| 1 | Requirements: problem statement, actors, survey, SRS, use cases | S1 | 1 | 20 to 21 Nov | none |
+| 2 | Planning: process model, WBS, Gantt chart, risks, board | S4 | 1 | 20 to 21 Nov | none |
+| 3 | Design: ER diagram, architecture, DFDs, data dictionary | S2 | 1 | 21 to 22 Nov | 1 |
+| 4 | Sequence diagram and student status state diagram | S1 | 1 | 22 Nov | 3 |
+| 5 | Development: attendance (23 Nov), marks and risk rules (24 Nov) | S3 | 2 | 23 to 24 Nov | 3 |
+| 6 | Testing: tests and test case table | S3 | 2 | 25 Nov | 5 |
+| 7 | Ethics table and professional responsibility statement | S1, S4 | 2 | 24 Nov | 1 |
+| 8 | Report, slides, deployment doc, rehearsal | S4 (all) | 2 | 25 to 26 Nov | all |
 
 **Milestones**
-- **M1:** SRS signed off (end of W1)
-- **M2:** Design frozen (W2)
-- **M3:** Attendance module ready to demo (W3)
-- **M4:** Marks and risk logic done (W4)
-- **M5:** Report and slides final (W5)
-- **M6:** Presentation (W6)
+- **M1:** Requirements and plan done (20 to 21 Nov)
+- **M2:** Design frozen, Sprint 1 review (22 Nov)
+- **M3:** Attendance module working (23 Nov)
+- **M4:** Marks and risk rules working (24 Nov)
+- **M5:** Testing done, report and slides final (26 Nov)
+- **M6:** Submission (27 Nov)
 
 **Risks**
 
 | Risk | Mitigation |
 |---|---|
 | Scope creep (biometrics, ML) | Stick to the out-of-scope list |
-| Members busy during exams | Keep a buffer week; give every task a backup person |
+| Members busy or unavailable | Give every task a backup person, and use 27 Nov as the buffer day |
 | S3 overloaded as the only developer | S2 writes the database schema and sample data |
 | Diagrams don't match each other | Check DFD balancing at M2 |
 | Little Git experience, merge conflicts | One branch per feature; small pull requests (PRs) |
@@ -279,7 +284,7 @@ User (role), Student, Faculty, Course, Section, Enrollment, ClassSession, Attend
 
 **Task board: Jira Free**, linked to the repo with the free "GitHub for Atlassian" app.
 - Columns: Backlog / To Do / In Progress / Review / Done.
-- Every issue has an owner, priority and due date. Epics or versions serve as milestones; sprints follow the increments.
+- Every issue has an owner, priority and due date. Epics serve as milestones and the 2 sprints follow the plan above.
 - Put the Jira issue key in each commit and PR (e.g. `AAM-12 add attendance form`) so they appear on the Jira issue.
 - Invite the professor by email early and confirm they can open the board (Jira Free has no public link).
 - Backup: a public GitHub Project, which anyone can open from a URL.
