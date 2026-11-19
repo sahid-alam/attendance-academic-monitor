@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block title %}Mark {{ cs.held_on }}{% endblock %}
+{% block body %}
+<h1 class="h4">{{ course.code }} · session on {{ cs.held_on }}</h1>
+<p><a href="{{ url_for('course', course_id=course.id) }}">back to course</a></p>
+
+{% if locked %}
+  <div class="alert alert-warning">Recorded more than 48 hours ago, so this is read only. Ask the HOD for changes.</div>
+{% elif existing %}
+  <div class="alert alert-info">Already recorded. You can still edit it within 48 hours of the first submit.</div>
+{% endif %}
+
+<form method="post">
+  <table class="table table-sm bg-white align-middle">
+    <thead><tr><th>USN</th><th>Name</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for s in students %}
+        {% set cur = existing.get(s.id, 'P') %}
+        <tr><td>{{ s.usn }}</td><td>{{ s.name }}</td>
+          <td>
+            {% for code, label in [('P', 'Present'), ('A', 'Absent'), ('L', 'Late')] %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="s{{ s.id }}" id="s{{ s.id }}{{ code }}"
+                       value="{{ code }}" {% if cur == code %}checked{% endif %} {% if locked %}disabled{% endif %}>
+                <label class="form-check-label" for="s{{ s.id }}{{ code }}">{{ label }}</label>
+              </div>
+            {% endfor %}
+          </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if not locked %}<button class="btn btn-primary">Submit attendance</button>{% endif %}
+</form>
+{% endblock %}
