@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}{{ course.code }}{% endblock %}
+{% block body %}
+<h1 class="h4">{{ course.code }} · {{ course.name }}</h1>
+
+<form method="post" action="{{ url_for('new_session', course_id=course.id) }}" class="row g-2 align-items-end my-3">
+  <div class="col-auto">
+    <label class="form-label" for="held_on">New session date</label>
+    <input class="form-control" type="date" name="held_on" id="held_on" value="{{ today }}" required>
+  </div>
+  <div class="col-auto"><button class="btn btn-primary">Take attendance</button></div>
+</form>
+
+<div class="row g-4">
+  <div class="col-md-7">
+    <h2 class="h6">Students</h2>
+    <table class="table table-sm bg-white">
+      <thead><tr><th>USN</th><th>Name</th><th class="text-end">Attendance</th></tr></thead>
+      <tbody>
+        {% for s in students %}
+          <tr><td>{{ s.usn }}</td><td>{{ s.name }}</td>
+            <td class="text-end">{{ '%.2f%%' % s.pct if s.pct is not none else 'none yet' }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-5">
+    <h2 class="h6">Sessions</h2>
+    <ul class="list-group">
+      {% for cs in sessions %}
+        <a class="list-group-item list-group-item-action d-flex justify-content-between" href="{{ url_for('mark', session_id=cs.id) }}">
+          {{ cs.held_on }}
+          <span class="text-muted small">{{ 'recorded' if cs.recorded_at else 'not taken' }}</span>
+        </a>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

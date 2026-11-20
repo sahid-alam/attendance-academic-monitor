@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block body %}
+<form method="post" class="row g-2 align-items-end mb-4">
+  <div class="col-auto">
+    <label class="form-label" for="faculty_id">Acting as faculty</label>
+    <select class="form-select" name="faculty_id" id="faculty_id">
+      {% for f in faculty %}
+        <option value="{{ f.id }}" {% if f.id == session.faculty_id %}selected{% endif %}>{{ f.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-dark">Switch</button></div>
+</form>
+
+<h1 class="h4">My courses</h1>
+<div class="list-group">
+  {% for c in courses %}
+    <a class="list-group-item list-group-item-action" href="{{ url_for('course', course_id=c.id) }}">{{ c.code }} · {{ c.name }}</a>
+  {% else %}
+    <p class="text-muted">Pick a faculty member above to see their courses.</p>
+  {% endfor %}
+</div>
+{% endblock %}
