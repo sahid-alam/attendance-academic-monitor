@@ -60,13 +60,13 @@ Colleges currently track attendance in paper registers and internal marks in sep
 | Term | Meaning |
 |---|---|
 | P / A / L | Present / Absent / Late — the three attendance statuses |
-| Attendance % | `(P + L) / total_sessions × 100` for a student in a course |
-| At-Risk | A student whose attendance % or internal marks fall below the configured threshold |
-| Warning | A student whose attendance is in the 65–74.99% condonation band |
-| Risk Rule | A configurable threshold (metric, operator, threshold value, severity) stored in the database |
-| Intervention | A mentoring action (counselling, remedial class, etc.) recorded against a risk flag |
-| Audit Log | An immutable record of who changed what attendance or marks entry, and when |
-| RBAC | Role-Based Access Control — every server-side route checks the caller's role |
+| Attendance % | `(P + L) / total_sessions × 100` for a student in a course (`v_attendance_pct`) |
+| At-Risk | (`AT_RISK`) A student whose attendance % or internal marks fall below the configured threshold |
+| Warning | (`WARNING`) A student whose attendance is in the 65–74.99% condonation band |
+| Risk Rule | A configurable threshold (`metric`, `operator`, `threshold`, `severity`) stored in `risk_rules` |
+| Intervention | A mentoring action (`Counselling`, `Remedial class`, `Parent meeting`, `Other`) stored in `interventions` |
+| Audit Log | An immutable record (`audit_log`) of who changed what attendance or marks entry, and when |
+| RBAC | Role-Based Access Control — every server-side route checks `users.role` |
 | HOD | Head of Department |
 | DPDP Act | India's Digital Personal Data Protection Act, 2023 |
 
@@ -128,7 +128,7 @@ Every user must log in with a username and password before accessing any part of
 **Actors:** All roles
 
 **Inputs:**
-- Username (email or USN)
+- Email (login identifier in `users.email`)
 - Password (plain text, over HTTPS only)
 
 **Processing:**
@@ -158,20 +158,20 @@ The Admin can create, read, update, and delete (CRUD) student records, faculty r
 **Actors:** Admin
 
 **Inputs:**
-- For individual creation: form fields (name, USN/employee ID, email, role, course code, section name, etc.)
+- For individual creation: form fields (`full_name`, `roll_no` / `employee_code`, `email`, `role`, `course_code`, `section_name`, etc.)
 - For bulk import: a CSV file with a defined column header row
 
 **Processing:**
-1. For individual creation: validate required fields, check for duplicates (e.g., USN uniqueness), write to D1 or D2.
+1. For individual creation: validate required fields, check for duplicates (e.g., `roll_no` / `email` uniqueness), write to D1 or D2.
 2. For CSV import: parse each row, validate, insert valid rows, collect and display a summary of rows that were rejected and why.
-3. All changes are written to the AuditLog (D7).
+3. All changes are written to `audit_log` (D7).
 
 **Outputs:**
 - Confirmation page listing records created / updated
 - For CSV import: a row-by-row import report (success count, skip count, reasons)
 
 **Error conditions:**
-- Duplicate USN / course code → reject that row and continue with the rest
+- Duplicate `roll_no` / `course_code` → reject that row and continue with the rest
 - Required field missing → validation error shown next to the field
 - CSV file has wrong format → reject the whole file with a clear message
 
@@ -182,19 +182,19 @@ The Admin can create, read, update, and delete (CRUD) student records, faculty r
 **Priority:** High | **DFD process:** 2.0 | **Data store:** D2, D3
 
 **Description:**
-Before marking attendance, a faculty member creates a class session by specifying the date and period for a course section they teach.
+Before marking attendance, a faculty member creates a class session by specifying `session_date` and `period` for a course section they teach.
 
 **Actors:** Faculty
 
 **Inputs:**
-- Course / section (selected from a list of sections the faculty member teaches)
-- Date (calendar picker)
-- Period number or time slot
+- Section (`section_id`, selected from `sections` where `faculty_id` matches the logged-in faculty)
+- `session_date` (calendar picker)
+- `period` (integer 1–10)
 
 **Processing:**
-1. Verify the faculty member is assigned to the selected section (server-side check).
-2. Check for a duplicate session on the same date and period for that section.
-3. Create a `class_session` record with `recorded_at` initially NULL (set to current timestamp on first attendance submission).
+1. Verify `sections.faculty_id` matches the logged-in faculty member (server-side check).
+2. Check for a duplicate session on the same `(section_id, session_date, period)`.
+3. Create a `class_sessions` row with `created_by` and `submitted_at` (set on submission, starting the 48-hour edit window).
 
 **Outputs:**
 - New session created → redirected to the attendance marking screen for that session
@@ -210,24 +210,24 @@ Before marking attendance, a faculty member creates a class session by specifyin
 **Priority:** High | **DFD process:** 2.0 | **Data store:** D3
 
 **Description:**
-For an open class session, the faculty member marks every enrolled student as Present (P), Absent (A), or Late (L) and submits the list in a single batch.
+For an open class session, the faculty member marks every enrolled student as Present (`P`), Absent (`A`), or Late (`L`) and submits the list in a single batch.
 
 **Actors:** Faculty
 
 **Inputs:**
-- Session ID (from FR3)
-- For each enrolled student: status ∈ {P, A, L}
+- `session_id` (from FR3)
+- For each enrolled student: `status` ∈ `{P, A, L}`
 
 **Processing:**
-1. Confirm the session belongs to a section the faculty member teaches.
+1. Confirm the session belongs to a section the faculty member teaches (`sections.faculty_id`).
 2. Confirm the session is not locked (see FR5).
-3. For each student: upsert an `attendance_record` row (insert on first submission, update on edit).
-4. Set `class_session.recorded_at` to the current timestamp if this is the first submission.
-5. Trigger FR8 (recalculate attendance %) for each student in the section.
-6. Trigger FR9 (evaluate risk rules) for each student.
+3. For each student: upsert an `attendance_records` row (insert on first submission, update on edit).
+4. Record `class_sessions.submitted_at = CURRENT_TIMESTAMP` on submission.
+5. Trigger FR8 (recalculate `attendance_pct`) for each student in the section.
+6. Trigger FR9 (evaluate `risk_rules`) for each student.
 
 **Outputs:**
-- Success screen: "Attendance saved. 2 students newly flagged."
+- Success screen: `"Attendance saved. N students newly flagged."`
 - FR10 is triggered for any student whose status changed.
 
 **Error conditions:**
@@ -238,21 +238,21 @@ For an open class session, the faculty member marks every enrolled student as Pr
 
 ### FR5 – Attendance Edit Window and Locking
 
-**Priority:** High | **DFD process:** 2.0 | **Data store:** D3, D7 AuditLog
+**Priority:** High | **DFD process:** 2.0 | **Data store:** D3, `audit_log`
 
 **Description:**
-Faculty may edit the attendance for a session within 48 hours of the first submission timestamp (`class_session.recorded_at`). After 48 hours the record locks and can only be changed by the HOD.
+Faculty may edit the attendance for a session within 48 hours of `class_sessions.submitted_at`. After 48 hours the record locks and can only be changed by the HOD.
 
 **Actors:** Faculty (edit), HOD (unlock/override)
 
 **Processing:**
-1. On every edit request, the system checks `NOW() - recorded_at`.
-2. If `< 48 h`: allow the edit. Write the before/after values and the editor's `user_id` and timestamp to the AuditLog (D7).
-3. If `≥ 48 h`: reject the edit, return an error message, and log the rejected attempt.
+1. On every edit request, the system checks `NOW() - class_sessions.submitted_at`.
+2. If `< 48 h`: allow the edit (`UPDATE attendance_records SET status = ?, updated_at = CURRENT_TIMESTAMP`). Write an `UPDATE` row with `old_value`, `new_value`, `user_id`, and `changed_at` to `audit_log`.
+3. If `≥ 48 h`: reject the edit and return an error message directing the faculty to the HOD.
 
 **Outputs:**
-- Successful edit → updated attendance record + audit log entry
-- Locked record → error message: "This session is locked. Contact the HOD to request a correction."
+- Successful edit → updated `attendance_records` row + `audit_log` entry
+- Locked record → error message: `"This session is locked. Contact the HOD to request a correction."`
 
 ---
 
@@ -295,14 +295,14 @@ Faculty enters the marks each enrolled student obtained in an assessment. Marks 
 **Actors:** Faculty
 
 **Inputs:**
-- Assessment ID (from FR6)
-- For each enrolled student: marks obtained (numeric)
-- Or: a CSV file with columns `usn, marks_obtained`
+- `assessment_id` (from FR6)
+- For each enrolled student: `marks_obtained` (numeric)
+- Or: a CSV file with columns `roll_no, marks_obtained`
 
 **Processing:**
-1. Validate each value: 0 ≤ value ≤ max_marks; reject non-numeric input.
-2. Upsert a `mark_entry` row for each student.
-3. Write changes to the AuditLog (D7).
+1. Validate each value: `0 ≤ marks_obtained ≤ max_marks`; reject non-numeric input.
+2. Upsert a `mark_entries` row for each student.
+3. Write changes to `audit_log`.
 4. Trigger FR9 (evaluate risk rules) for each student whose marks changed.
 
 **Outputs:**
@@ -310,7 +310,7 @@ Faculty enters the marks each enrolled student obtained in an assessment. Marks 
 - For CSV: import report (accepted / rejected rows)
 
 **Error conditions:**
-- Mark > max_marks or < 0 → reject that row; show the out-of-range value
+- Mark > `max_marks` or < 0 → reject that row; show the out-of-range value
 - Student not enrolled in the section → reject the row
 
 ---
@@ -320,7 +320,7 @@ Faculty enters the marks each enrolled student obtained in an assessment. Marks 
 **Priority:** High | **DFD process:** 2.0 / 4.0 | **Data store:** D3, D6
 
 **Description:**
-Every time attendance is submitted or edited for a session, the system recalculates the attendance percentage for every student in that section and stores the result.
+Every time attendance is submitted or edited for a session, the system recalculates the attendance percentage for every student in that course via `v_attendance_pct`.
 
 **Actors:** System (triggered automatically after FR4 or FR5)
 
@@ -332,13 +332,13 @@ attendance_pct = (count of P records + count of L records)
 ```
 
 **Processing:**
-1. Query `attendance_record` for all sessions in the course for the student.
-2. Count P and L statuses. Count total sessions.
+1. Query `attendance_records` joined with `class_sessions` and `sections` (`v_attendance_pct`) for the student and course.
+2. Count `P` and `L` statuses. Count total sessions.
 3. Compute the percentage; round to two decimal places.
-4. Store the result for use by FR9 and FR12.
+4. Provide the updated `attendance_pct` to FR9 and FR12.
 
 **Outputs:**
-- Updated `attendance_pct` in the student's course record (available to FR9 and FR12)
+- Updated `attendance_pct` computed in `v_attendance_pct` (available to FR9 and FR12)
 
 ---
 
@@ -347,49 +347,49 @@ attendance_pct = (count of P records + count of L records)
 **Priority:** High | **DFD process:** 4.0 (sub-processes 4.1 – 4.4) | **Data stores:** D3, D4, D5, D6
 
 **Description:**
-After every attendance submission (FR4 / FR5) or marks entry (FR7), the system evaluates all active risk rules against the affected student's data and updates the student's risk flag status.
+After every attendance submission (FR4 / FR5) or marks entry (FR7), the system evaluates all active rules in `risk_rules` against the affected student's data and updates `risk_flags` and `risk_flag_reasons`.
 
 **Actors:** System (triggered automatically)
 
-**Default risk rules (configurable via FR14):**
+**Default risk rules (`risk_rules`, configurable via FR14):**
 
-| Rule ID | Metric | Condition | Severity |
+| `rule_id` | Metric | Condition | Severity |
 |---|---|---|---|
-| R1 | attendance_pct | ≥ 75 % | Normal |
-| R2 | attendance_pct | 65 – 74.99 % | Warning |
-| R3 | attendance_pct | < 65 % | At-Risk |
-| R4 | marks_obtained / max_marks | < 40 % for any single test | At-Risk |
-| R5 | marks_obtained / max_marks | < cutoff in ≥ 2 courses | At-Risk |
+| – | `attendance_pct` | ≥ 75 % and no rule fires | `NORMAL` |
+| 1 | `attendance_pct` | `BETWEEN` 65 and 74.99 % | `WARNING` |
+| 2 | `attendance_pct` | `<` 65 % | `AT_RISK` |
+| 3 | `test_pct` | `<` 40 % for any single assessment | `AT_RISK` |
+| 4 | `courses_below_cutoff` | `>=` 2 courses where a rule fires | `AT_RISK` |
 
 **Processing (sub-processes 4.1 – 4.4):**
-1. **4.1 Fetch data:** Read the student's current attendance % (D3) and marks (D4) for the course. Read active rules from D5.
-2. **4.2 Apply rules:** Evaluate each rule; determine the highest severity that applies (At-Risk > Warning > Normal).
-3. **4.3 Compare and update:** Compare the new severity with the status currently stored in D6. If changed, write the new status, timestamp, and triggered rule IDs to D6.
+1. **4.1 Fetch data:** Read the student's current `attendance_pct` (D3 / `v_attendance_pct`) and `test_pct` (D4 / `v_test_pct`). Read active rules from `risk_rules` (`is_active = 1`, D5).
+2. **4.2 Apply rules:** Evaluate each rule; determine the highest severity that applies (`AT_RISK` > `WARNING` > `NORMAL`).
+3. **4.3 Compare and update:** Compare the new severity with the current row in `risk_flags` (`is_current = 1`, D6). If changed, mark the previous row `is_current = 0`, insert a new `risk_flags` row, and insert matching reasons into `risk_flag_reasons`.
 4. **4.4 Raise alert:** If the status changed, generate an alert event and pass it to FR10.
 
 **Outputs:**
-- Updated risk flag in D6
+- Updated `risk_flags` and `risk_flag_reasons` in D6
 - Alert event passed to FR10 (if status changed)
 
 ---
 
 ### FR10 – Automated Status-Change Notifications
 
-**Priority:** High | **DFD process:** 5.0 | **Data store:** D7
+**Priority:** High | **DFD process:** 5.0 | **Data store:** D7 (`notifications`)
 
 **Description:**
-When a student's risk status changes (detected in FR9), the system sends an in-app notification and an email to the student's mentor and to the student.
+When a student's risk status changes (detected in FR9), the system creates `IN_APP` and `EMAIL` notifications in `notifications` for the student's mentor and for the student.
 
 **Actors:** System (triggered by FR9)
 
 **Inputs:**
-- Student ID, old status, new status, triggered rule IDs (from FR9)
+- `student_id`, `flag_id`, `old_status`, `new_status`, triggered rule reasons (from FR9)
 
 **Processing:**
-1. Look up the student's mentor from D1.
-2. Create an in-app notification record in D7 for both the mentor and the student.
-3. Send an email via SMTP to both.
-4. If the email send fails: save the notification to a retry queue in D7; do not roll back the attendance or marks save.
+1. Look up the student's mentor (`students.mentor_id` → `faculty.user_id`) from D1.
+2. Insert `IN_APP` rows into `notifications` (D7) for both the mentor and the student.
+3. Insert `EMAIL` rows into `notifications` (`status = 'QUEUED'`) and send via SMTP.
+4. On SMTP success: set `status = 'SENT'`, `sent_at = CURRENT_TIMESTAMP`. On SMTP failure: keep `status = 'QUEUED'` and increment `attempts` for retry; do not roll back the attendance or marks save.
 
 **Outputs:**
 - In-app notification visible to mentor and student on next login
@@ -468,12 +468,12 @@ The HOD has a department-level dashboard that shows attendance and marks summari
 **Actors:** HOD
 
 **Dashboard panels:**
-- Course-level attendance summary (average attendance %, number of at-risk students per course)
-- Department-wide at-risk list: student name, USN, course, current status, triggered rules, last-updated timestamp
+- Course-level attendance summary (average `attendance_pct`, number of `AT_RISK` students per course)
+- Department-wide at-risk list: `full_name`, `roll_no`, `course_code`, `status`, reasons from `risk_flag_reasons`, `flagged_on` / `updated_on`
 - Trend over time (last 4 weeks)
 
 **CSV export columns:**
-`student_name, usn, course_code, course_name, attendance_pct, risk_status, triggered_rules, last_updated`
+`full_name, roll_no, course_code, course_name, attendance_pct, status, reasons, updated_on`
 
 **Outputs:**
 - Rendered HTML dashboard
@@ -483,37 +483,38 @@ The HOD has a department-level dashboard that shows attendance and marks summari
 
 ### FR14 – Dynamic Threshold Configuration
 
-**Priority:** Medium | **DFD process:** 1.0 | **Data store:** D5
+**Priority:** Medium | **DFD process:** 1.0 | **Data store:** D5 (`risk_rules`)
 
 **Description:**
-The HOD or Admin can view, add, edit, or deactivate risk rules stored in D5 without changing any application code. Changes take effect on the next run of FR9.
+The HOD or Admin can view, add, edit, or deactivate risk rules stored in `risk_rules` (D5) without changing any application code. Changes take effect on the next run of FR9.
 
 **Actors:** HOD, Admin
 
 **Inputs:**
-- Rule metric (dropdown: `attendance_pct`, `marks_pct`, `multi_course_deficit`)
-- Operator (dropdown: `<`, `<=`, `>=`, `>`)
-- Threshold value (numeric)
-- Severity (dropdown: Normal, Warning, At-Risk)
-- Active flag (boolean)
+- `rule_name` (human-readable reason label)
+- `metric` (dropdown: `attendance_pct`, `test_pct`, `courses_below_cutoff`)
+- `operator` (dropdown: `<`, `<=`, `>=`, `BETWEEN`)
+- `threshold` (numeric; plus `threshold_high` when `operator = 'BETWEEN'`)
+- `severity` (dropdown: `WARNING`, `AT_RISK`)
+- `is_active` (boolean)
 
 **Processing:**
-1. Validate inputs (threshold must be a number between 0 and 100 for percentage metrics).
-2. Write the new or updated rule to D5.
+1. Validate inputs (`threshold` between 0 and 100 for percentage metrics; `threshold_high` required if `BETWEEN`).
+2. Write the new or updated rule to `risk_rules` (D5) with `updated_by` and `updated_at`.
 3. The rule is applied by FR9 on the next attendance or marks submission.
 
 **Outputs:**
-- Updated rules table displayed to the HOD/Admin
+- Updated `risk_rules` table displayed to the HOD/Admin
 - Confirmation message
 
 ---
 
 ### FR15 – System Audit Log
 
-**Priority:** High | **DFD process:** all | **Data store:** D7 AuditLog
+**Priority:** High | **DFD process:** all | **Data store:** `audit_log`
 
 **Description:**
-Every change to an attendance record or a marks entry is recorded in an immutable audit log. The log captures who changed what, the before value, the after value, and the timestamp. The log cannot be edited or deleted by any user role.
+Every change to an `attendance_records` or `mark_entries` row is recorded in an immutable `audit_log` table. The log captures who changed what, the before value, the after value, and the timestamp. The log cannot be edited or deleted by any user role.
 
 **Actors:** System (automatic); HOD (read-only view)
 
@@ -522,12 +523,13 @@ Every change to an attendance record or a marks entry is recorded in an immutabl
 | Field | Description |
 |---|---|
 | `log_id` | Auto-incremented primary key |
-| `table_name` | `attendance_record` or `mark_entry` |
+| `user_id` | `user_id` of the actor who made the change |
+| `table_name` | `attendance_records` or `mark_entries` |
 | `record_id` | The PK of the changed row |
-| `changed_by` | `user_id` of the actor |
-| `change_type` | INSERT, UPDATE, or REJECTED_EDIT |
-| `old_value` | JSON snapshot of the row before the change (NULL for INSERT) |
+| `action` | `INSERT`, `UPDATE`, or `DELETE` |
+| `old_value` | JSON snapshot of the row before the change (`NULL` for `INSERT`) |
 | `new_value` | JSON snapshot of the row after the change |
+| `reason` | Optional explanation for the edit |
 | `changed_at` | UTC timestamp |
 
 **Outputs:**
@@ -592,7 +594,7 @@ Every change to an attendance record or a marks entry is recorded in an immutabl
 | 1 | Faculty | Selects the course section and date. |
 | 2 | System | Displays the enrolled student list with P/A/L radio buttons. |
 | 3 | Faculty | Marks each student P, A, or L and clicks Submit. |
-| 4 | System | Validates that every student has a status. Saves all attendance records. Sets `recorded_at` if first submission. |
+| 4 | System | Validates that every student has a status. Inserts into `class_sessions` (setting `submitted_at`) and `attendance_records`. |
 | 5 | System | Recalculates attendance % for every student in the section (FR8). |
 | 6 | System | Runs risk rules for each student (FR9). |
 | 7 | System | For any student whose status changed: saves the new flag (D6) and triggers a notification (FR10). |
@@ -605,7 +607,7 @@ Every change to an attendance record or a marks entry is recorded in an immutabl
 | A1 | Faculty does not teach this section | HTTP 403: "You are not assigned to this section." |
 | A2 | Attendance already submitted for this session | Offer to edit within the 48-hour window (FR5). |
 | A3 | Session is locked (> 48 h old) | "This session is locked. Contact the HOD for a correction." Reject the submission. |
-| A4 | Notification email fails | Attendance is saved normally. Notification is queued for retry. Faculty sees no error. |
+| A4 | Notification email fails | Attendance is saved normally. Notification stays `QUEUED` in `notifications` for retry. Faculty sees no error. |
 
 ---
 
