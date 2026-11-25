@@ -187,14 +187,61 @@ def set_status(db, student_id, course_id, new, fired, now):
         new = "RESOLVED"
     if new == old:
         return None
+    if new == "RESOLVED":  # recovered on their own, so the mentor's open case is closed too
+        db.execute("""UPDATE interventions SET status = 'CLOSED', closed_on = ?, outcome = 'Back within the thresholds'
+                      WHERE flag_id = ? AND status = 'OPEN'""", (now.date().isoformat(), cur["flag_id"]))
+    flag_id = move_flag(db, student_id, course_id, cur, new, [(r["rule_id"], v) for r, v in fired], now)
+    alert(db, student_id, course_id, flag_id, old, new, fired, now)
+    return old, new
+
+
+def move_flag(db, student_id, course_id, cur, status, reasons, now):
+    """Retire the current flag and add a new one with its reasons [(rule_id, value)]. Returns the new flag_id"""
     if cur:
         db.execute("UPDATE risk_flags SET is_current = 0, updated_on = ? WHERE flag_id = ?", (ts(now), cur["flag_id"]))
     flag_id = db.execute("INSERT INTO risk_flags (student_id, course_id, status, flagged_on) VALUES (?, ?, ?, ?)",
-                         (student_id, course_id, new, ts(now))).lastrowid
+                         (student_id, course_id, status, ts(now))).lastrowid
     db.executemany("INSERT INTO risk_flag_reasons (flag_id, rule_id, actual_value) VALUES (?, ?, ?)",
-                   [(flag_id, r["rule_id"], v) for r, v in fired])
-    alert(db, student_id, course_id, flag_id, old, new, fired, now)
-    return old, new
+                   [(flag_id, *r) for r in reasons])
+    return flag_id
+
+
+# --- mentor interventions (FR11): Warning/At-Risk -> Under Intervention -> Resolved ---
+
+ACTIONS = ("Counselling", "Remedial class", "Parent meeting", "Other")
+
+
+def open_case(db, flag_id, mentor_id, action, notes, now=None):
+    """Mentor opens a case on a current At-Risk flag (state diagram: At-Risk -> Under Intervention).
+    Returns the intervention_id"""
+    now = now or utcnow()
+    if action not in ACTIONS:
+        raise ValueError("pick an action from the list")
+    cur = db.execute("SELECT * FROM risk_flags WHERE flag_id = ? AND is_current = 1", (flag_id,)).fetchone()
+    if cur is None or cur["status"] != "AT_RISK":
+        raise ValueError("a case can only be opened on a current At-Risk flag")
+    reasons = db.execute("SELECT rule_id, actual_value FROM risk_flag_reasons WHERE flag_id = ?", (flag_id,)).fetchall()
+    new_id = move_flag(db, cur["student_id"], cur["course_id"], cur, "UNDER_INTERVENTION", [tuple(r) for r in reasons], now)
+    iid = db.execute("INSERT INTO interventions (flag_id, mentor_id, action, notes, opened_on) VALUES (?, ?, ?, ?, ?)",
+                     (new_id, mentor_id, action, notes, now.date().isoformat())).lastrowid
+    db.commit()
+    return iid
+
+
+def close_case(db, intervention_id, outcome, now=None):
+    """Mentor closes an open case: the case is CLOSED and the student's flag becomes RESOLVED.
+    The next attendance or marks entry runs the rules again: Normal if nothing fires, else flagged again"""
+    now = now or utcnow()
+    case = db.execute("SELECT * FROM interventions WHERE intervention_id = ? AND status = 'OPEN'",
+                      (intervention_id,)).fetchone()
+    if case is None:
+        raise ValueError("case is not open")
+    cur = db.execute("SELECT * FROM risk_flags WHERE flag_id = ?", (case["flag_id"],)).fetchone()
+    db.execute("UPDATE interventions SET status = 'CLOSED', closed_on = ?, outcome = ? WHERE intervention_id = ?",
+               (now.date().isoformat(), outcome, intervention_id))
+    if cur["is_current"]:
+        move_flag(db, cur["student_id"], cur["course_id"], cur, "RESOLVED", [], now)
+    db.commit()
 
 
 def alert(db, student_id, course_id, flag_id, old, new, fired, now):
@@ -232,7 +279,8 @@ def evaluate(db, student_ids, course_id, now=None):
             courses = [r["course_id"] for r in db.execute(
                 """SELECT DISTINCT sec.course_id FROM enrollments e JOIN sections sec USING (section_id)
                    WHERE e.student_id = ?""", (sid,))]
-            n = sum(worst(course_check(db, rules, sid, c)) == "AT_RISK" for c in courses)
+            # a course counts when any attendance or test rule fires there, Warning or At-Risk (data dictionary 6)
+            n = sum(bool(course_check(db, rules, sid, c)) for c in courses)
             fired_multi = [(r, n) for r in multi if fires(r, n)]
             if ch := set_status(db, sid, None, worst(fired_multi), fired_multi, now):
                 changes.append((sid, *ch))
@@ -293,7 +341,56 @@ def index():
     who = me()
     notes = db.execute("SELECT * FROM notifications WHERE recipient_id = ? ORDER BY notification_id DESC LIMIT 20",
                        (who["user_id"],)).fetchall() if who else []
-    return render_template("index.html", faculty=faculty, sections=sections, me=who, notes=notes)
+    # mentees who need attention, with the reasons and the open case if there is one
+    mentees = db.execute(
+        """SELECT rf.flag_id, rf.status, s.roll_no, u.full_name, COALESCE(c.course_code, '2 or more courses') AS course,
+                  (SELECT GROUP_CONCAT(rr.rule_name || ' (' || rfr.actual_value || ')', '; ')
+                     FROM risk_flag_reasons rfr JOIN risk_rules rr USING (rule_id) WHERE rfr.flag_id = rf.flag_id) AS why,
+                  i.intervention_id, i.action, i.notes, i.opened_on
+           FROM risk_flags rf JOIN students s USING (student_id) JOIN users u ON u.user_id = s.user_id
+           LEFT JOIN courses c ON c.course_id = rf.course_id
+           LEFT JOIN interventions i ON i.flag_id = rf.flag_id AND i.status = 'OPEN'
+           WHERE s.mentor_id = ? AND rf.is_current = 1 AND rf.status IN ('WARNING', 'AT_RISK', 'UNDER_INTERVENTION')
+           ORDER BY s.roll_no, rf.course_id""", (session.get("faculty_id"),)).fetchall()
+    return render_template("index.html", faculty=faculty, sections=sections, me=who, notes=notes, mentees=mentees,
+                           actions=ACTIONS)
+
+
+def my_mentee_flag(flag_id):
+    """403 unless the picked faculty is this student's mentor"""
+    row = get_db().execute("SELECT s.mentor_id FROM risk_flags rf JOIN students s USING (student_id) WHERE rf.flag_id = ?",
+                           (flag_id,)).fetchone()
+    if row is None:
+        abort(404)
+    if row["mentor_id"] != session.get("faculty_id"):
+        abort(403)
+
+
+@app.post("/flag/<int:flag_id>/case")
+def open_case_page(flag_id):
+    my_mentee_flag(flag_id)
+    try:
+        open_case(get_db(), flag_id, session["faculty_id"], request.form["action"], request.form.get("notes", "").strip())
+    except ValueError as e:
+        flash(str(e), "danger")
+    else:
+        flash("case opened, status is now Under Intervention", "success")
+    return redirect(url_for("index"))
+
+
+@app.post("/case/<int:intervention_id>/close")
+def close_case_page(intervention_id):
+    case = get_db().execute("SELECT flag_id FROM interventions WHERE intervention_id = ?", (intervention_id,)).fetchone()
+    if case is None:
+        abort(404)
+    my_mentee_flag(case["flag_id"])
+    try:
+        close_case(get_db(), intervention_id, request.form.get("outcome", "").strip() or None)
+    except ValueError as e:
+        flash(str(e), "danger")
+    else:
+        flash("case closed, status is now Resolved", "success")
+    return redirect(url_for("index"))
 
 
 @app.route("/section/<int:section_id>")
