@@ -31,5 +31,5 @@ Their mentor is Prof. P. Verma.
 |---|---|---|---|---|
 | TC-15 | Access control | Prof. Verma opens Dr. Sharma's section | 403 Forbidden | Pass |
 | TC-16 | Take attendance | Dr. Sharma submits the form with Diya absent | Page shows 72.73%. The same date and period opens the edit page | Pass |
-| TC-17 | Demo flow end to end | Faculty submits, then switch to the mentor | "1 newly flagged" for the faculty. The mentor sees "Diya Patel (CSE2302) is now Warning in CS501" | Pass |
+| TC-17 | Demo flow end to end | Faculty submits, then switch to the mentor | "1 newly flagged" for the faculty, with no status label on the faculty page. The mentor sees "Diya Patel (CSE2302) is now Warning in CS501" | Pass |
 | TC-18 | Marks form | Add Internal Test 2, enter 25 out of 20, then valid marks | Error "between 0 and 20", then "marks saved for 2 students" | Pass |

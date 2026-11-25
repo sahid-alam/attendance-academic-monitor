@@ -95,7 +95,7 @@ class RiskPagesTest(unittest.TestCase):
         form = {"session_date": "2026-11-25", "period": 1, **{f"s{k}": v for k, v in {**ALL_P, 2: "A"}.items()}}
         page = self.client.post("/section/1/attendance", data=form, follow_redirects=True).get_data(as_text=True)
         self.assertIn("1 newly flagged", page)
-        self.assertIn("Warning", page)
+        self.assertNotIn("Warning", page)  # faculty sees the count, not the label
         self.client.post("/", data={"faculty_id": 2})  # switch to the mentor
         self.assertIn("Diya Patel (CSE2302) is now Warning in CS501", self.client.get("/").get_data(as_text=True))
 

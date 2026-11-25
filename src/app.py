@@ -304,10 +304,8 @@ def section(section_id):
     for s in section_students(section_id):
         test = db.execute("SELECT MIN(test_pct) FROM v_test_pct WHERE student_id = ? AND course_id = ?",
                           (s["student_id"], sec["course_id"])).fetchone()[0]
-        flag = db.execute("SELECT status FROM risk_flags WHERE student_id = ? AND course_id = ? AND is_current = 1",
-                          (s["student_id"], sec["course_id"])).fetchone()
-        students.append(dict(s, pct=attendance_pct(db, s["student_id"], sec["course_id"]), test=test,
-                             status=flag["status"] if flag else "NORMAL"))
+        # no risk status here: only the student, mentor and HOD see that label (ethics, Stage 6)
+        students.append(dict(s, pct=attendance_pct(db, s["student_id"], sec["course_id"]), test=test))
     assessments = db.execute("SELECT * FROM assessments WHERE section_id = ? ORDER BY assessment_id",
                              (section_id,)).fetchall()
     sessions = db.execute(

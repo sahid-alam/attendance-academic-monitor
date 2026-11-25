@@ -38,5 +38,6 @@ The schema and seed data come from the design (`schema.sql`, AAM-20). `schema_my
   - Students under intervention are left to the mentor until they are back above the thresholds.
 - **Demo:** act as Dr. R. Sharma, open CS501 and mark Diya absent. She goes from Normal to Warning. Then switch to Prof. P. Verma to see the alert.
 - **Tests (AAM-31):** 18 checks in `test_attendance.py` and `test_risk.py`. The test case table is in `report/test_cases.md`.
-- **Not built:** email (SMTP), the mentor's intervention page and reports. Alerts are in-app only.
+- **Not built:** email (SMTP), the mentor's intervention page, reports and an edit window for marks (attendance has one). Alerts are in-app only.
+- **Who sees the status:** faculty only sees how many students were newly flagged. The status label goes to the mentor and the student.
 - **Login:** there is no real login yet. The home page has an "acting as faculty" picker for the demo.
