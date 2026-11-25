@@ -265,7 +265,7 @@ class_session     = session_id + section_id + session_date + period
 |---|---|---|
 | attendance_pct | `(count(P) + count(L)) / total_sessions × 100` | view `v_attendance_pct` |
 | test_pct | `marks_obtained / max_marks × 100` | view `v_test_pct` |
-| courses_below_cutoff | number of courses where any rule with severity AT_RISK fired | computed by Risk Service (4.2) |
+| courses_below_cutoff | number of courses where any attendance or test rule fires (WARNING or AT_RISK) | computed by Risk Service (4.2) |
 | classes_still_needed | classes the student must attend to reach 75% | computed by Report Service (6.0) |
 
 ## 7. Default risk rules (data in `risk_rules`)
@@ -276,6 +276,6 @@ class_session     = session_id + section_id + session_date + period
 | 1 | attendance_pct BETWEEN 65 AND 74.99 | WARNING |
 | 2 | attendance_pct < 65 | AT_RISK |
 | 3 | test_pct < 40 | AT_RISK |
-| 4 | courses_below_cutoff ≥ 2 | AT_RISK |
+| 4 | courses_below_cutoff ≥ 2 (e.g. Warning in 2 courses) | AT_RISK |
 
 The 75% minimum comes from university rules and the 40% marks cutoff is the team's choice. Both are stored as data so the HOD can change them.
