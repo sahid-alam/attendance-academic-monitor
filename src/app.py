@@ -86,7 +86,7 @@ def is_locked(cs, now=None):
 
 def submit_attendance(db, section_id, session_date, period, faculty_id, statuses, now=None):
     """New session + its P/A/L list in one go. Raises sqlite3.IntegrityError if that date and period
-    is already recorded (sequence diagram flow b). Returns the new session_id"""
+    is already recorded (sequence diagram flow b). Returns (session_id, risk status changes)"""
     now = now or utcnow()
     cur = db.execute(
         """INSERT INTO class_sessions (section_id, session_date, period, created_by, submitted_at)
@@ -98,11 +98,13 @@ def submit_attendance(db, section_id, session_date, period, faculty_id, statuses
         [(cur.lastrowid, sid, st, ts(now)) for sid, st in statuses.items()],
     )
     db.commit()
-    return cur.lastrowid
+    course_id = db.execute("SELECT course_id FROM sections WHERE section_id = ?", (section_id,)).fetchone()[0]
+    return cur.lastrowid, evaluate(db, statuses, course_id, now)
 
 
 def edit_attendance(db, session_id, statuses, user_id, now=None):
-    """Change a recorded session within 48 hours. Every changed entry goes to audit_log"""
+    """Change a recorded session within 48 hours. Every changed entry goes to audit_log.
+    Returns the risk status changes"""
     now = now or utcnow()
     cs = db.execute("SELECT * FROM class_sessions WHERE session_id = ?", (session_id,)).fetchone()
     if is_locked(cs, now):
@@ -119,6 +121,127 @@ def edit_attendance(db, session_id, statuses, user_id, now=None):
             audit(db, user_id, "attendance_records", old[sid]["record_id"],
                   {"status": old[sid]["status"]}, {"status": st}, now)
     db.commit()
+    course_id = db.execute("SELECT course_id FROM sections WHERE section_id = ?", (cs["section_id"],)).fetchone()[0]
+    return evaluate(db, statuses, course_id, now)
+
+
+# --- marks (AAM-29, DFD process 3.0) ----------------------------------------
+
+def save_marks(db, assessment_id, marks, user_id, now=None):
+    """Save marks_obtained per student. Raises ValueError if any is outside 0..max_marks.
+    Changing a mark that was already entered goes to audit_log. Returns the risk status changes"""
+    now = now or utcnow()
+    a = db.execute("SELECT * FROM assessments WHERE assessment_id = ?", (assessment_id,)).fetchone()
+    if any(not 0 <= m <= a["max_marks"] for m in marks.values()):
+        raise ValueError(f"marks must be between 0 and {a['max_marks']:g}")
+    old = {r["student_id"]: r for r in db.execute(
+        "SELECT * FROM mark_entries WHERE assessment_id = ?", (assessment_id,))}
+    for sid, m in marks.items():
+        if sid not in old:
+            db.execute("INSERT INTO mark_entries (assessment_id, student_id, marks_obtained, entered_at) VALUES (?, ?, ?, ?)",
+                       (assessment_id, sid, m, ts(now)))
+        elif old[sid]["marks_obtained"] != m:
+            db.execute("UPDATE mark_entries SET marks_obtained = ?, updated_at = ? WHERE mark_id = ?",
+                       (m, ts(now), old[sid]["mark_id"]))
+            audit(db, user_id, "mark_entries", old[sid]["mark_id"],
+                  {"marks_obtained": old[sid]["marks_obtained"]}, {"marks_obtained": m}, now)
+    db.commit()
+    course_id = db.execute("SELECT course_id FROM sections WHERE section_id = ?", (a["section_id"],)).fetchone()[0]
+    return evaluate(db, marks, course_id, now)
+
+
+# --- risk rules (AAM-30, DFD process 4.0, sub-processes 4.1 to 4.4) ---------
+# thresholds live in risk_rules, nothing is hardcoded here
+
+RANK = {"NORMAL": 0, "WARNING": 1, "AT_RISK": 2}
+
+
+def fires(rule, value):
+    t, hi = rule["threshold"], rule["threshold_high"]
+    return {"<": value < t, "<=": value <= t, ">=": value >= t,
+            "BETWEEN": hi is not None and t <= value <= hi}[rule["operator"]]
+
+
+def worst(fired):
+    return max((r["severity"] for r, _ in fired), key=RANK.get, default="NORMAL")
+
+
+def course_check(db, rules, student_id, course_id):
+    """4.1 + 4.2: fetch attendance % and test % for one course, apply the rules. Returns [(rule, value)]"""
+    # ponytail: test rules use the lowest test %, fine while every test rule is "<"
+    tests = [r["test_pct"] for r in db.execute(
+        "SELECT test_pct FROM v_test_pct WHERE student_id = ? AND course_id = ?", (student_id, course_id))]
+    values = {"attendance_pct": attendance_pct(db, student_id, course_id), "test_pct": min(tests, default=None)}
+    return [(r, values[r["metric"]]) for r in rules
+            if r["metric"] in values and values[r["metric"]] is not None and fires(r, values[r["metric"]])]
+
+
+def set_status(db, student_id, course_id, new, fired, now):
+    """4.3: compare with the current flag and update it. Returns (old, new) if the status changed, else None"""
+    cur = db.execute("SELECT * FROM risk_flags WHERE student_id = ? AND course_id IS ? AND is_current = 1",
+                     (student_id, course_id)).fetchone()
+    old = cur["status"] if cur else "NORMAL"
+    if old == "UNDER_INTERVENTION":  # the mentor owns the case now, only a full recovery moves it on
+        if new != "NORMAL":
+            return None
+        new = "RESOLVED"
+    if new == old:
+        return None
+    if cur:
+        db.execute("UPDATE risk_flags SET is_current = 0, updated_on = ? WHERE flag_id = ?", (ts(now), cur["flag_id"]))
+    flag_id = db.execute("INSERT INTO risk_flags (student_id, course_id, status, flagged_on) VALUES (?, ?, ?, ?)",
+                         (student_id, course_id, new, ts(now))).lastrowid
+    db.executemany("INSERT INTO risk_flag_reasons (flag_id, rule_id, actual_value) VALUES (?, ?, ?)",
+                   [(flag_id, r["rule_id"], v) for r, v in fired])
+    alert(db, student_id, course_id, flag_id, old, new, fired, now)
+    return old, new
+
+
+def alert(db, student_id, course_id, flag_id, old, new, fired, now):
+    """4.4 -> 5.0: tell the mentor and the student. In-app only for the demo, email (SMTP) is not built"""
+    s = db.execute(
+        """SELECT s.roll_no, s.user_id, u.full_name, f.user_id AS mentor_user_id FROM students s
+           JOIN users u ON u.user_id = s.user_id LEFT JOIN faculty f ON f.faculty_id = s.mentor_id
+           WHERE s.student_id = ?""", (student_id,)).fetchone()
+    where = db.execute("SELECT course_code FROM courses WHERE course_id = ?", (course_id,)).fetchone()
+    where = where["course_code"] if where else "2 or more courses"
+    why = "; ".join(f"{r['rule_name']} ({v:g})" for r, v in fired) or "back within the thresholds"
+    label = lambda st: st.replace("_", " ").title()
+    msgs = [(s["mentor_user_id"], f"{s['full_name']} ({s['roll_no']}) is now {label(new)} in {where}, was {label(old)}: {why}"),
+            # supportive wording for the student, no "at risk" label (ethics, Stage 6)
+            (s["user_id"], f"Your status in {where} changed. Your mentor will get in touch if you need support"
+                           if RANK.get(new, 0) else f"Your status in {where} is back to normal")]
+    db.executemany(
+        """INSERT INTO notifications (recipient_id, flag_id, channel, message, status, attempts, created_at, sent_at)
+           VALUES (?, ?, 'IN_APP', ?, 'SENT', 1, ?, ?)""",
+        [(uid, flag_id, m, ts(now), ts(now)) for uid, m in msgs if uid])
+
+
+def evaluate(db, student_ids, course_id, now=None):
+    """Run the risk rules for these students after an attendance or marks change.
+    Returns [(student_id, old, new)] for every status that changed"""
+    now = now or utcnow()
+    rules = db.execute("SELECT * FROM risk_rules WHERE is_active = 1").fetchall()
+    multi = [r for r in rules if r["metric"] == "courses_below_cutoff"]
+    changes = []
+    for sid in student_ids:
+        fired = course_check(db, rules, sid, course_id)
+        if ch := set_status(db, sid, course_id, worst(fired), fired, now):
+            changes.append((sid, *ch))
+        if multi:  # the "2 or more courses" rule, stored with course_id NULL
+            courses = [r["course_id"] for r in db.execute(
+                """SELECT DISTINCT sec.course_id FROM enrollments e JOIN sections sec USING (section_id)
+                   WHERE e.student_id = ?""", (sid,))]
+            n = sum(worst(course_check(db, rules, sid, c)) == "AT_RISK" for c in courses)
+            fired_multi = [(r, n) for r in multi if fires(r, n)]
+            if ch := set_status(db, sid, None, worst(fired_multi), fired_multi, now):
+                changes.append((sid, *ch))
+    db.commit()
+    return changes
+
+
+def newly_flagged(changes):
+    return len({sid for sid, old, new in changes if RANK.get(new, 0) > RANK.get(old, 0)})
 
 
 # --- pages ------------------------------------------------------------------
@@ -167,19 +290,30 @@ def index():
     sections = db.execute(
         """SELECT sec.*, c.course_code, c.course_name FROM sections sec JOIN courses c USING (course_id)
            WHERE sec.faculty_id = ?""", (session.get("faculty_id"),)).fetchall()
-    return render_template("index.html", faculty=faculty, sections=sections, me=me())
+    who = me()
+    notes = db.execute("SELECT * FROM notifications WHERE recipient_id = ? ORDER BY notification_id DESC LIMIT 20",
+                       (who["user_id"],)).fetchall() if who else []
+    return render_template("index.html", faculty=faculty, sections=sections, me=who, notes=notes)
 
 
 @app.route("/section/<int:section_id>")
 def section(section_id):
     sec = section_for_faculty(section_id)
     db = get_db()
-    students = [dict(s, pct=attendance_pct(db, s["student_id"], sec["course_id"]))
-                for s in section_students(section_id)]
+    students = []
+    for s in section_students(section_id):
+        test = db.execute("SELECT MIN(test_pct) FROM v_test_pct WHERE student_id = ? AND course_id = ?",
+                          (s["student_id"], sec["course_id"])).fetchone()[0]
+        flag = db.execute("SELECT status FROM risk_flags WHERE student_id = ? AND course_id = ? AND is_current = 1",
+                          (s["student_id"], sec["course_id"])).fetchone()
+        students.append(dict(s, pct=attendance_pct(db, s["student_id"], sec["course_id"]), test=test,
+                             status=flag["status"] if flag else "NORMAL"))
+    assessments = db.execute("SELECT * FROM assessments WHERE section_id = ? ORDER BY assessment_id",
+                             (section_id,)).fetchall()
     sessions = db.execute(
         "SELECT * FROM class_sessions WHERE section_id = ? ORDER BY session_date DESC, period DESC",
         (section_id,)).fetchall()
-    return render_template("section.html", sec=sec, students=students, sessions=sessions,
+    return render_template("section.html", sec=sec, students=students, sessions=sessions, assessments=assessments,
                            today=datetime.now().date().isoformat())
 
 
@@ -204,8 +338,8 @@ def take_attendance(section_id):
         if statuses is None:
             flash("mark every student as P, A or L", "danger")
         else:
-            submit_attendance(db, section_id, session_date, period, sec["faculty_id"], statuses)
-            flash(f"attendance saved for {len(statuses)} students", "success")
+            _, changes = submit_attendance(db, section_id, session_date, period, sec["faculty_id"], statuses)
+            flash(f"attendance saved for {len(statuses)} students, {newly_flagged(changes)} newly flagged", "success")
             return redirect(url_for("section", section_id=section_id))
     return render_template("mark.html", sec=sec, students=students, existing={}, locked=False,
                            session_date=session_date, period=period)
@@ -226,14 +360,55 @@ def edit_session(session_id):
             flash("mark every student as P, A or L", "danger")
             return redirect(url_for("edit_session", session_id=session_id))
         try:
-            edit_attendance(db, session_id, statuses, me()["user_id"])
+            changes = edit_attendance(db, session_id, statuses, me()["user_id"])
         except Locked:  # flow (c)
             flash("this class is older than 48 hours and locked, ask the HOD to change it", "danger")
             return redirect(url_for("section", section_id=sec["section_id"]))
-        flash("attendance updated", "success")
+        flash(f"attendance updated, {newly_flagged(changes)} newly flagged", "success")
         return redirect(url_for("section", section_id=sec["section_id"]))
 
     existing = {r["student_id"]: r["status"] for r in db.execute(
         "SELECT student_id, status FROM attendance_records WHERE session_id = ?", (session_id,))}
     return render_template("mark.html", sec=sec, students=students, existing=existing, locked=is_locked(cs),
                            session_date=cs["session_date"], period=cs["period"], session_id=session_id)
+
+
+@app.post("/section/<int:section_id>/assessments")
+def new_assessment(section_id):
+    sec = section_for_faculty(section_id)
+    db = get_db()
+    try:
+        cur = db.execute(
+            "INSERT INTO assessments (section_id, name, max_marks, held_on, created_by) VALUES (?, ?, ?, ?, ?)",
+            (section_id, request.form["name"].strip(), request.form.get("max_marks", type=float),
+             request.form.get("held_on") or None, sec["faculty_id"]))
+    except sqlite3.IntegrityError:
+        flash("an assessment with that name already exists, or max marks is missing", "danger")
+        return redirect(url_for("section", section_id=section_id))
+    db.commit()
+    return redirect(url_for("assessment", assessment_id=cur.lastrowid))
+
+
+@app.route("/assessment/<int:assessment_id>", methods=["GET", "POST"])
+def assessment(assessment_id):
+    db = get_db()
+    a = db.execute("SELECT * FROM assessments WHERE assessment_id = ?", (assessment_id,)).fetchone()
+    if a is None:
+        abort(404)
+    sec = section_for_faculty(a["section_id"])
+    students = section_students(sec["section_id"])
+
+    if request.method == "POST":
+        marks = {s["student_id"]: request.form.get(f"m{s['student_id']}", type=float) for s in students}
+        marks = {sid: m for sid, m in marks.items() if m is not None}  # blank = not entered yet
+        try:
+            changes = save_marks(db, assessment_id, marks, me()["user_id"])
+        except ValueError as e:
+            flash(str(e), "danger")
+            return redirect(url_for("assessment", assessment_id=assessment_id))
+        flash(f"marks saved for {len(marks)} students, {newly_flagged(changes)} newly flagged", "success")
+        return redirect(url_for("section", section_id=sec["section_id"]))
+
+    existing = {r["student_id"]: r["marks_obtained"] for r in db.execute(
+        "SELECT student_id, marks_obtained FROM mark_entries WHERE assessment_id = ?", (assessment_id,))}
+    return render_template("marks.html", sec=sec, a=a, students=students, existing=existing)

@@ -23,6 +23,14 @@
   {% endfor %}
 </div>
 
+<h2 class="h5">My notifications</h2>
+<ul class="list-group">
+  {% for n in notes %}
+    <li class="list-group-item"><span class="text-muted small">{{ n.created_at }} UTC</span><br>{{ n.message }}</li>
+  {% else %}
+    <li class="list-group-item text-muted">Nothing yet.</li>
+  {% endfor %}
+</ul>
 {% else %}
   <p class="text-muted">Pick who you are above.</p>
 {% endif %}
