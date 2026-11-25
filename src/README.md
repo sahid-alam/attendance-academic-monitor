@@ -14,7 +14,9 @@ python3 -m venv ../.venv
 ../.venv/bin/flask --app app run
 ```
 
-Open http://127.0.0.1:5000, pick "Prof. Demo One" and open DEMO-SE.
+Open http://127.0.0.1:5000, pick "Dr. R. Sharma" and open CS501.
+
+The schema and seed data come from the design (`schema.sql`, AAM-20). `schema_mysql.sql` is the production version.
 
 ## Tests
 
@@ -24,10 +26,10 @@ Open http://127.0.0.1:5000, pick "Prof. Demo One" and open DEMO-SE.
 
 ## What works so far
 
-- **Attendance (AAM-28):** faculty creates a session and marks each student P, A or L. The attendance % updates after every submit.
-  - **% formula:** (P + L) / sessions recorded × 100.
-  - **Editing:** allowed for 48 hours after the first submit, then the session locks.
-  - **Access:** a faculty member who doesnt teach the course gets a 403.
+- **Attendance (AAM-28):** faculty picks a date and period for their section and marks each student P, A or L. The attendance % updates after every submit.
+  - **% formula:** (P + L) / sessions recorded × 100, read from the `v_attendance_pct` view.
+  - **Same class twice:** the date and period already recorded opens the edit page instead.
+  - **Editing:** allowed for 48 hours after the submit, then the class locks. Every change is written to `audit_log`.
+  - **Access:** a faculty member who doesnt teach the section gets a 403.
 - **Not yet:** marks (AAM-29) and the risk rules (AAM-30).
-  - `save_attendance()` returns the new % per student, which is where the risk engine will plug in.
 - **Login:** there is no real login yet. The home page has an "acting as faculty" picker for the demo.

@@ -1,28 +1,30 @@
 {% extends "layout.html" %}
-{% block title %}Mark {{ cs.held_on }}{% endblock %}
+{% block title %}Attendance {{ session_date }}{% endblock %}
 {% block body %}
-<h1 class="h4">{{ course.code }} · session on {{ cs.held_on }}</h1>
-<p><a href="{{ url_for('course', course_id=course.id) }}">back to course</a></p>
+<h1 class="h4">{{ sec.course_code }} · {{ session_date }}, period {{ period }}</h1>
+<p><a href="{{ url_for('section', section_id=sec.section_id) }}">back to section</a></p>
 
 {% if locked %}
   <div class="alert alert-warning">Recorded more than 48 hours ago, so this is read only. Ask the HOD for changes.</div>
 {% elif existing %}
-  <div class="alert alert-info">Already recorded. You can still edit it within 48 hours of the first submit.</div>
+  <div class="alert alert-info">Already recorded. You can edit it within 48 hours of the first submit. Every change is logged.</div>
 {% endif %}
 
-<form method="post">
+<form method="post" action="{{ url_for('edit_session', session_id=session_id) if session_id else url_for('take_attendance', section_id=sec.section_id) }}">
+  <input type="hidden" name="session_date" value="{{ session_date }}">
+  <input type="hidden" name="period" value="{{ period }}">
   <table class="table table-sm bg-white align-middle">
-    <thead><tr><th>USN</th><th>Name</th><th>Status</th></tr></thead>
+    <thead><tr><th>Roll no</th><th>Name</th><th>Status</th></tr></thead>
     <tbody>
       {% for s in students %}
-        {% set cur = existing.get(s.id, 'P') %}
-        <tr><td>{{ s.usn }}</td><td>{{ s.name }}</td>
+        {% set cur = existing.get(s.student_id, 'P') %}
+        <tr><td>{{ s.roll_no }}</td><td>{{ s.full_name }}</td>
           <td>
             {% for code, label in [('P', 'Present'), ('A', 'Absent'), ('L', 'Late')] %}
               <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="s{{ s.id }}" id="s{{ s.id }}{{ code }}"
+                <input class="form-check-input" type="radio" name="s{{ s.student_id }}" id="s{{ s.student_id }}{{ code }}"
                        value="{{ code }}" {% if cur == code %}checked{% endif %} {% if locked %}disabled{% endif %}>
-                <label class="form-check-label" for="s{{ s.id }}{{ code }}">{{ label }}</label>
+                <label class="form-check-label" for="s{{ s.student_id }}{{ code }}">{{ label }}</label>
               </div>
             {% endfor %}
           </td></tr>
