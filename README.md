@@ -11,7 +11,7 @@ This is our 4-person Software Engineering CCA team project.
 | Student 1 (TBD) | Requirements & Analysis |
 | Student 2 (TBD) | Design & Database |
 | Student 3 (TBD) | Development & Testing |
-| Student 4 (TBD) | Project Management & Documentation |
+| Madiha Iram (S4) | Project Management & Documentation |
 
 ## Process model
 
@@ -45,11 +45,23 @@ Use made-up data only. Never commit real student data, passwords or `.env` files
 
 ## Setup
 
-Setup steps for `src/` are coming in Sprint 2.
+Follow the [deployment and demo guide](report/DEPLOYMENT.md) for the verified Flask/SQLite attendance prototype. It uses synthetic data and a demo identity picker.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r src/requirements.txt
+.venv/bin/flask --app src/app.py init-db  # destructive reset: disposable demo database only
+.venv/bin/flask --app src/app.py run --host 127.0.0.1 --port 5000
+.venv/bin/python -m unittest discover -s src -v
+```
 
 ## Links
 
-- Jira board: (link coming)
+- [Jira backlog](https://sahidsworkspace-39968046.atlassian.net/jira/software/projects/AAM/boards/2/backlog) (workspace membership required)
+- [S4 deliverable checklist](planning/DELIVERY_CHECKLIST.md)
+- [Final report](report/FINAL_REPORT.md) / [PDF](report/FINAL_REPORT.pdf)
+- [Slide deck](presentation/AAM_PRESENTATION.pptx) / [PDF](presentation/AAM_PRESENTATION.pdf)
+- [Verification evidence](report/VERIFICATION.md)
 
 ## License
 
