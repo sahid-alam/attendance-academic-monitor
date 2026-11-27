@@ -8,15 +8,17 @@ Use the editable deck `AAM_PRESENTATION.pptx`, slide PDF and speaker notes in `S
 
 | Slides | Speaker | Target | Handoff |
 |---|---|---|---|
-| 1–2 | S1 | 70 seconds | Problem and scope → S4 for process |
-| 3–4 | S4 / Madiha | 105 seconds | Process and schedule → S2 for design |
-| 5–6 | S2 | 100 seconds | Architecture/data flow → S3 for executable demo |
-| 7–8 | S3 | 155 seconds | Attendance demo and verification → S1 for ethics |
-| 9 | S1 | 50 seconds | Responsibilities → S4 for deployment/readiness |
-| 10–12 | S4 / Madiha | 120 seconds | Deployment, contributions and remaining gates → questions |
+| 1–2 | S1 | 70 seconds | Problem, users and scope → S4 |
+| 3–4 | S4 / Madiha | 105 seconds | Process and task board → S2 |
+| 5 | S2 | 50 seconds | DFD levels and balancing → S3 with S1 |
+| 6 | S3; S1 narrates the sequence | 110 seconds | Live attendance / designed state transitions → S2 |
+| 7–8 | S2 | 90 seconds | Architecture, stack, deployment and bottlenecks → S3 |
+| 9–10 | S3 | 85 seconds | Verification and GitHub contribution evidence → S1 |
+| 11 | S1 | 50 seconds | Ethics → S4 for closing questions |
+| 12 | S4 / Madiha | 40 seconds | Readiness and questions |
 
 Total: 600 seconds. If the faculty sets a different duration, shorten explanations before
-rushing the demo. All four members speak. S4 covers the two assessed planning stages and
+rushing the demo. The topic and speaker order matches Stage 7 of `planning/PROJECT_PLAN.md`. All four members speak. S4 covers the two assessed planning stages and
 keeps the difference between planned and completed work visible.
 
 ## Before the run
@@ -30,7 +32,7 @@ keeps the difference between planned and completed work visible.
 - Keep a labeled static backup of the Diya percentage calculation if the app fails.
 - Confirm any adopted changes from PRs #3–#5; re-test and update report/slides before claiming them.
 
-## Demo cues for S3 (slides 7–8)
+## Demo cues for S3 and S1 (slide 6; verification on slide 9)
 
 On main: show Diya 80% → submit 26 November, period 1, Diya Absent → 72.73%.
 Correct to Present → 81.82%; duplicate session opens editing. Explain the 48-hour lock and
@@ -54,6 +56,9 @@ test record rather than hiding the failure or pretending a screenshot is live.
 | Did everyone contribute? | Cite actual commits, artifacts and reviews; do not infer equal effort from role allocation |
 
 ## Actual rehearsal record (complete after the run)
+
+27 November scope decision: the user deferred AAM-37. The pack is ready; actual rehearsal
+completion remains unclaimed and the Jira/GitHub rehearsal tasks remain open.
 
 | Field | Actual evidence |
 |---|---|

@@ -90,3 +90,29 @@ The lab-server section is a reproducible procedure, not a deployment claim. SSH 
 supervised lab execution, team acceptance and actual submission still need their own evidence.
 Earlier smoke-test results above remain historical; the eight-test suite was rerun for this follow-up.
 Jira was inspected under Madiha's signed-in account; no Jira statuses were changed in this follow-up.
+
+## Acceptance and merge preparation — 27 November 2026
+
+The user expanded scope to Madiha's ten assigned tasks and PR #16, then explicitly deferred
+AAM-37. Live Jira descriptions for AAM-13–AAM-17 and AAM-33–AAM-37 were read under Madiha's
+account. Nine document tasks meet those descriptions; the rehearsal remains open.
+
+Repository context included the complete file inventory, project plan, attendance runtime,
+schema/seed/test structure, design exports/dictionary, reports/presentation, and the current
+file lists and descriptions of separate PRs #3–#5. Those PRs were not merged or adopted.
+
+The slide order was corrected to match Stage 7: problem (S1), process/board (S4), DFD (S2),
+live demo (S3 with S1 narration), architecture/deployment (S2), GitHub (S3), ethics (S1), with
+verification and S4 closing material added. The deck has 12 slides and 600 planned seconds;
+this is not an executed rehearsal. Report PDF and PPTX/PDF exports were regenerated to
+include the latest process/Gantt images. The report ends with its contribution table.
+
+A fresh Flask CLI initialization and test-client smoke run again verified 80.00% → 72.73%
+→ 81.82%, duplicate-session redirection, A-to-P audit and wrong-faculty 403. The latest timestamp
+is in `DEMO_SMOKE.json`; the original 26 November run described above remains historical.
+The eight-test suite passed. Rendered report/presentation pages were visually inspected;
+PDF text, slide structure/notes, speaker order, local links and clean diff checked before merge.
+
+Jira closure is limited to the nine document deliverables after merge; it does not certify
+teammate endorsement, production/lab deployment or submission. AAM-37 stays open. The user
+explicitly authorized the PR merge; assistant review is not represented as a human teammate's sign-off.

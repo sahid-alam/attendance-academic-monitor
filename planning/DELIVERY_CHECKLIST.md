@@ -1,34 +1,37 @@
-# S4 submission checklist
+# S4 deliverable acceptance checklist
 
-Prepared for Madiha Iram's Project Management & Documentation role on 26 November 2026.
-Scope follows the supplied assignment summary and `PROJECT_PLAN.md`. This is a preparation
-record, not a claim that the team held past meetings or completed a rehearsal.
+Madiha Iram / S4. Live Jira descriptions inspected on **27 November 2026** against the full
+repository, the project plan and open PRs. The user authorized publication, Jira completion
+and merging PR #16. **AAM-37 is explicitly deferred** and remains open.
 
-| Jira | Deliverable | Review condition |
+| Jira | Actual Jira requirement | Verified repository evidence |
 |---|---|---|
-| AAM-13 | [Process model](PROCESS_MODEL.md), PNG diagram | Two sprint goals, events, feedback and outputs shown |
-| AAM-14 | [Process justification](PROCESS_JUSTIFICATION.md) | Scrum choice and 19 November change rationale explained |
-| AAM-15 | [WBS](WBS.md) | Owners, dependencies, outputs and acceptance criteria present |
-| AAM-16 | [Gantt](GANTT.md), PNG chart | Baseline dates, dependencies and submission milestone present |
-| AAM-17 | [Risk register](RISK_REGISTER.md) | Scored risks, owners, triggers, mitigation and contingency present |
-| AAM-33 | [Responsibility statement](../report/PROFESSIONAL_RESPONSIBILITY.md) | Team reviews and endorses the proposed commitments |
-| AAM-34 | [Final report](../report/FINAL_REPORT.md), PDF | Evidence checked against selected code revision |
-| AAM-35 | [Slides](../presentation/SLIDES.md), PPTX and PDF | All speakers review content and timing |
-| AAM-36 | [Deployment guide](../report/DEPLOYMENT.md) | Clean setup, tests and demo flow verified |
-| AAM-37 | [Rehearsal pack](../presentation/REHEARSAL.md) | Actual timed rehearsal and attendance recorded by team |
+| AAM-13 | Draw.io Scrum flow, two sprints | [Process](PROCESS_MODEL.md), [editable draw.io](process-model.drawio), matching PNG; review and retrospective are separate events |
+| AAM-14 | Scrum rationale, two sprint goals, deadline, small chunks, Waterfall comparison | [Justification](PROCESS_JUSTIFICATION.md) covers all requested points |
+| AAM-15 | Work packages with owner, week and dependency based on the plan | [WBS](WBS.md), 23 packages; all original owners/dates/dependencies preserved |
+| AAM-16 | Both sprints, 19–26 Nov, milestones M1–M6 | [Gantt](GANTT.md), matching PNG; M6 is the original 27 Nov submission checkpoint |
+| AAM-17 | Likelihood, impact and mitigation for original eight risks | [Register](RISK_REGISTER.md), original eight plus four additional risks |
+| AAM-33 | Short student-data and risk-rule limitations statement | [Statement](../report/PROFESSIONAL_RESPONSIBILITY.md); team endorsement is a separate pending commitment, not claimed by document completion |
+| AAM-34 | Full report across stages; contribution table at the end | [Report](../report/FINAL_REPORT.md), regenerated PDF; runnable baseline distinguished from open feature PRs |
+| AAM-35 | Demo slides for every member in the plan's speaker order | [Deck](../presentation/AAM_PRESENTATION.pptx), PDF and notes; S1 → S4 → S2 → S3 with S1 → S2 → S3 → S1, plus S4 closing; 12 slides / 600 planned seconds |
+| AAM-36 | Local and lab-server run instructions; failed-demo fallback | [Guide](../report/DEPLOYMENT.md), synthetic SQLite, loopback tunnel, start/stop, backup/reset and labeled fallback |
+| AAM-37 | Full live-demo run with timing; everyone practises | [Pack](../presentation/REHEARSAL.md) prepared; actual team run deferred by user, **not complete** |
 
-See [Jira-to-GitHub review tracking](ISSUE_MAP.md) for the ten task issues.
+## Acceptance boundaries
 
-Stage epics AAM-2, AAM-3 and AAM-7 require their children's review; do not mark an epic Done
-solely because these files exist. GitHub issues and a PR provide review evidence, while Jira
-status changes require access to the live board and its actual acceptance criteria.
+The nine document tasks are ready for Jira closure after the verified PR is merged. This
+accepts their actual Jira descriptions; it does not certify team endorsement, a completed
+rehearsal, production security, an actual lab deployment or institutional submission.
+Original baseline dates are preserved and no historical completion is backdated.
 
-## Delivery steps
+[Issue map](ISSUE_MAP.md) links each task to its GitHub review issue. The rehearsal issue
+remains open. Stage epics require review of all their children and are not closed by this
+checklist alone. PRs #3–#5 remain separate, unmerged work; the user scoped this merge to PR #16.
 
-- Prepare the ten artifacts from the existing plan, without expanding application scope.
-- Keep executable evidence on main separate from features proposed in PRs #3–#5.
-- Run the current attendance tests and a temporary-database smoke demo.
-- Generate readable diagram exports, report PDF and editable slide deck.
-- Verify links, artifact contents and clean diffs; commit with Jira keys.
-- Publish the separate branch, create task tracking issues and open a PR into main.
-- Leave rehearsal completion, teammate review and final submission pending until evidenced.
+## Verification
+
+- Full eight-test attendance suite and fresh disposable-database smoke flow passed.
+- Report and slides regenerated from the corrected source and inspected as rendered PDFs.
+- Draw.io source, six milestones, WBS preservation, local links and slide structure checked.
+- Slide speaker order compared directly with Stage 7 of the plan.
+- See [verification](../report/VERIFICATION.md) for exact scope and limitations.

@@ -1,6 +1,6 @@
 # Jira to GitHub review tracking
 
-These issues track the ten S4 deliverables on the submission branch. They remain open until review conditions are met; AAM-37 also requires a real timed rehearsal. Jira status updates and stage-epic completion are separate actions requiring live access.
+These issues track the ten S4 deliverables on the submission branch. On 27 November the nine document tasks were reconciled against their live Jira descriptions for closure after PR #16 merges. AAM-37 remains open by explicit user deferral and requires a real timed rehearsal. Stage epics are outside this task-only closure.
 
 | Jira | GitHub review issue | Artifact |
 |---|---|---|

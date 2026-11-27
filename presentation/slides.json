@@ -1,14 +1,160 @@
 [
-  {"title":"Earlier support starts with reliable records","kicker":"ONLINE STUDENT ATTENDANCE & ACADEMIC MONITORING","speaker":"S1","seconds":25,"bullets":["A four-person Software Engineering CCA project","Flask + SQLite attendance prototype; broader monitoring design","Prepared 26 November 2026 • submission baseline: 27 November"],"evidence":"S4 documentation: Madiha Iram\nCode baseline: main / 57c0c6a","notes":"Introduce the project and all four speakers by their confirmed names. Explain that the talk distinguishes the proposed monitoring system from the attendance prototype we can demonstrate."},
-  {"title":"One place to notice a student needs help","kicker":"PROBLEM & SCOPE","speaker":"S1","seconds":45,"bullets":["Attendance and marks in separate sheets hide emerging problems","Faculty records events; mentors review explainable support flags","Admin, Faculty, Mentor, HOD and Student are the five designed roles"],"evidence":"Out of scope\nBiometrics • ML prediction • SMS\nFees • timetable • mobile app","notes":"Explain why early support matters before examination eligibility decisions. Parents have no login; contact needs an appropriate consent process. Avoid claiming survey findings or institutional approvals that are not available."},
-  {"title":"Two sprints, with a review before the next step","kicker":"AAM-13 / AAM-14 • PROCESS MODEL","speaker":"S4 / Madiha Iram","seconds":55,"bullets":["19–22 Nov: requirements, design and planning","23–26 Nov: build, verification and submission material","Daily updates expose blockers; reviews feed the backlog"],"evidence":"Why the change?\nThe original five-increment, six-week schedule exceeded the deadline.","visual":"../planning/process-model.png","notes":"Explain the shift attributed to 19 November in the supplied task summary. Scrum also produces increments; the reason for the change was schedule fit and coordination, not that Incremental cannot work. The diagram is a baseline process, not evidence that meetings happened."},
-  {"title":"Make dependencies and late work visible","kicker":"AAM-15 / AAM-16 / AAM-17 • PLANNING","speaker":"S4 / Madiha Iram","seconds":50,"bullets":["WBS assigns outputs, owners, dependencies and review conditions","Design → build → tests → report → slides → rehearsal","High risks: integration, developer capacity and late documentation"],"evidence":"Original due dates remain visible.\nBaseline dates do not establish actual completion.","visual":"../planning/gantt.png","notes":"Describe the WBS support roles and the scored risk register. Report outlining can overlap development, but final results wait for a tested revision. Mention actual late preparation honestly and keep 27 November as the final-check baseline."},
-  {"title":"A small app on a relational design","kicker":"ARCHITECTURE & DATA","speaker":"S2","seconds":50,"bullets":["Server-rendered HTML and Bootstrap → Flask → SQLite","Users, enrollment and class sessions anchor attendance records","Schema also models marks, rules, flags, cases, notifications and audit"],"evidence":"MySQL DDL is supplied.\nThe runtime still uses sqlite3.\nSMTP is a design target.","notes":"Show the existing architecture/ER exports if asked. Explain unique section/date/period and session/student constraints, foreign keys and the percentage view. Tables for a feature do not prove the feature's runtime implementation."},
-  {"title":"Trace one scenario through the models","kicker":"DFD & BEHAVIORAL DESIGN","speaker":"S2","seconds":50,"bullets":["DFD 0: system and five actors; DFD 1: six main processes","DFD 2 expands risk evaluation and preserves its inputs/outputs","Intended flow: entry → percentage → risk → mentor support"],"evidence":"Main demonstrates entry and percentage.\nPR #4 proposes runtime risk and mentor flows.","notes":"Explain Level 2 fetching metrics, applying rules, comparing the current flag and raising an alert. Current state is an input for balancing. The proposed behavioral models include Normal, Warning, At-Risk, Under Intervention and Resolved; do not imply all states run on main."},
-  {"title":"Live demo: 80% becomes 72.73%","kicker":"EXECUTABLE ATTENDANCE SLICE","speaker":"S3","seconds":110,"bullets":["Dr. R. Sharma → CS501 → new 26 Nov / period 1 session","Mark Diya Absent: 8 attended / 11 recorded = 72.73%","Correct to Present: 9 / 11 = 81.82%; duplicate opens editing"],"evidence":"P + L count as attended.\nMain does not generate a new risk alert.\nUse synthetic data only.","notes":"Initialize a disposable database before the talk. Demonstrate the percentage values, duplicate/edit behavior and faculty switch if time permits. Explain the 48-hour lock with tests. If the demo fails, say so and use a clearly labeled static calculation; do not simulate a live alert."},
-  {"title":"Eight tests verify the attendance slice","kicker":"VERIFICATION & LIMITS","speaker":"S3","seconds":45,"bullets":["Percentages, Late, no data and new submissions","Duplicate rejection, invalid status, edit audit and 48-hour lock","Selected-faculty ownership and the web form flow"],"evidence":"Not established by this suite\nSecure login • SMTP • MySQL runtime\nLoad • accessibility • full role isolation","notes":"Cite the fresh verification record for this branch. Explain that PR #4 reports a different suite; those results are not main's results. A passing attendance suite is evidence of the covered behaviors, not a production-readiness certificate."},
-  {"title":"A flag should start a conversation","kicker":"AAM-33 • PROFESSIONAL RESPONSIBILITY","speaker":"S1","seconds":50,"bullets":["Human review, explainable thresholds and a correction route","Protect privacy, minimize data and require appropriate consent","Check disability, approved leave and institutional policy"],"evidence":"Identity picker ≠ secure login.\n75 / 65 / 40 are design assumptions.\nTeam endorsement remains pending.","notes":"Discuss supportive language and no public at-risk lists. No automatic punishment or exam exclusion should follow a threshold. Do not claim DPDP compliance, verified policy or accessibility certification. The statement proposes commitments and lists current implementation gaps."},
-  {"title":"Reproduce the demo before presenting it","kicker":"AAM-36 • DEPLOYMENT","speaker":"S4 / Madiha Iram","seconds":40,"bullets":["Create venv → install requirements → initialize synthetic SQLite","Run tests, then serve on loopback inside the VM","Back up before reset; init-db drops and recreates tables"],"evidence":"No public production deployment claimed.\nReal use needs authentication, security review, HTTPS and tested recovery.","notes":"Point to report/DEPLOYMENT.md for exact commands and troubleshooting. A cloud VM's loopback is inside the VM, so use its browser or authorized tunnel. Do not expose this identity-picker prototype to real student users."},
-  {"title":"Keep contribution evidence reviewable","kicker":"GIT, JIRA & TEAM HANDOFFS","speaker":"S4 / Madiha Iram","seconds":40,"bullets":["S1: requirements and ethics; S2: design and database","S3: implementation/tests; S4: planning and documentation","Separate branch, Jira-keyed commits and teammate PR review"],"evidence":"Merged: attendance and design.\nPending at inspection: PRs #3, #4, #5.\nAllocation is not proof of equal effort.","notes":"Show the submission PR and task tracking issues once published. Explain that main is not merged automatically. Link the actual author/reviewer evidence; the role table does not certify attendance or who performed a rehearsal."},
-  {"title":"Submission readiness has explicit gates","kicker":"AAM-34 / AAM-35 / AAM-37 • NEXT CHECKS","speaker":"S4 / Madiha Iram","seconds":40,"bullets":["Report, process/planning documents, guide and deck are review artifacts","Reconcile live Jira criteria and pending integration with the team","Perform a timed rehearsal; record attendance, fixes and final sign-off"],"evidence":"Questions\nWhat is designed? What runs?\nWhat evidence supports each claim?","notes":"Close with the implemented attendance outcome and the broader design goal. AAM-37 is still pending until an actual rehearsal is recorded. Invite questions on process choice, data flow and the privacy limits. References: repository plan, Scrum Guide 2020, ACM Code of Ethics and Flask deployment guidance."}
+  {
+    "title": "Earlier support starts with reliable records",
+    "kicker": "ONLINE STUDENT ATTENDANCE & ACADEMIC MONITORING",
+    "speaker": "S1",
+    "seconds": 25,
+    "bullets": [
+      "A four-person Software Engineering CCA project",
+      "Flask + SQLite attendance prototype; broader monitoring design",
+      "Prepared 26 November 2026 • submission baseline: 27 November"
+    ],
+    "evidence": "S4 documentation: Madiha Iram\nCode baseline: main / 57c0c6a",
+    "notes": "Introduce the project and all four speakers by their confirmed names. Explain that the talk distinguishes the proposed monitoring system from the attendance prototype we can demonstrate."
+  },
+  {
+    "title": "One place to notice a student needs help",
+    "kicker": "PROBLEM & SCOPE",
+    "speaker": "S1",
+    "seconds": 45,
+    "bullets": [
+      "Attendance and marks in separate sheets hide emerging problems",
+      "Faculty records events; mentors review explainable support flags",
+      "Admin, Faculty, Mentor, HOD and Student are the five designed roles"
+    ],
+    "evidence": "Out of scope\nBiometrics • ML prediction • SMS\nFees • timetable • mobile app",
+    "notes": "Explain why early support matters before examination eligibility decisions. Parents have no login; contact needs an appropriate consent process. Avoid claiming survey findings or institutional approvals that are not available."
+  },
+  {
+    "title": "Two sprints, with a review before the next step",
+    "kicker": "AAM-13 / AAM-14 • PROCESS MODEL",
+    "speaker": "S4 / Madiha Iram",
+    "seconds": 55,
+    "bullets": [
+      "19–22 Nov: requirements, design and planning",
+      "23–26 Nov: build, verification and submission material",
+      "Daily updates expose blockers; reviews feed the backlog"
+    ],
+    "evidence": "Why the change?\nThe original five-increment, six-week schedule exceeded the deadline.",
+    "visual": "../planning/process-model.png",
+    "notes": "Explain the shift attributed to 19 November in the supplied task summary. Scrum also produces increments; the reason for the change was schedule fit and coordination, not that Incremental cannot work. The diagram is a baseline process, not evidence that meetings happened."
+  },
+  {
+    "title": "Make dependencies and late work visible",
+    "kicker": "AAM-15 / AAM-16 / AAM-17 • PLANNING",
+    "speaker": "S4 / Madiha Iram",
+    "seconds": 50,
+    "bullets": [
+      "WBS assigns outputs, owners, dependencies and review conditions",
+      "Design → build → tests → report → slides → rehearsal",
+      "High risks: integration, developer capacity and late documentation"
+    ],
+    "evidence": "Original due dates remain visible.\nBaseline dates do not establish actual completion.",
+    "visual": "../planning/gantt.png",
+    "notes": "Describe the WBS support roles and the scored risk register. Report outlining can overlap development, but final results wait for a tested revision. Mention actual late preparation honestly and keep 27 November as the final-check baseline."
+  },
+  {
+    "title": "Trace one scenario through the models",
+    "kicker": "DFD & BEHAVIORAL DESIGN",
+    "speaker": "S2",
+    "seconds": 50,
+    "bullets": [
+      "DFD 0: system and five actors; DFD 1: six main processes",
+      "DFD 2 expands risk evaluation and preserves its inputs/outputs",
+      "Intended flow: entry → percentage → risk → mentor support"
+    ],
+    "evidence": "Main demonstrates entry and percentage.\nPR #4 proposes runtime risk and mentor flows.",
+    "notes": "Explain Level 2 fetching metrics, applying rules, comparing the current flag and raising an alert. Current state is an input for balancing. The proposed behavioral models include Normal, Warning, At-Risk, Under Intervention and Resolved; do not imply all states run on main."
+  },
+  {
+    "title": "Live demo: 80% becomes 72.73%",
+    "kicker": "EXECUTABLE ATTENDANCE SLICE",
+    "speaker": "S3; S1 narrates sequence",
+    "seconds": 110,
+    "bullets": [
+      "Dr. R. Sharma → CS501 → new 26 Nov / period 1 session",
+      "Mark Diya Absent: 8 attended / 11 recorded = 72.73%",
+      "Correct to Present: 9 / 11 = 81.82%; duplicate opens editing"
+    ],
+    "evidence": "P + L count as attended.\nMain does not generate a new risk alert.\nUse synthetic data only.",
+    "notes": "Initialize a disposable database before the talk. Demonstrate the percentage values, duplicate/edit behavior and faculty switch if time permits. Explain the 48-hour lock with tests. If the demo fails, say so and use a clearly labeled static calculation; do not simulate a live alert. S1 briefly narrates the designed sequence and exception paths; S3 performs only the implemented attendance portion. Explain that flag, mentor intervention and Resolved transitions remain design behavior on this revision."
+  },
+  {
+    "title": "A small app on a relational design",
+    "kicker": "ARCHITECTURE & DATA",
+    "speaker": "S2",
+    "seconds": 50,
+    "bullets": [
+      "Server-rendered HTML and Bootstrap → Flask → SQLite",
+      "Users, enrollment and class sessions anchor attendance records",
+      "Schema also models marks, rules, flags, cases, notifications and audit"
+    ],
+    "evidence": "MySQL DDL is supplied.\nThe runtime still uses sqlite3.\nSMTP is a design target.",
+    "notes": "Show the existing architecture/ER exports if asked. Explain unique section/date/period and session/student constraints, foreign keys and the percentage view. Tables for a feature do not prove the feature's runtime implementation."
+  },
+  {
+    "title": "Reproduce the demo before presenting it",
+    "kicker": "AAM-36 • DEPLOYMENT",
+    "speaker": "S2",
+    "seconds": 40,
+    "bullets": [
+      "Create venv → install requirements → initialize synthetic SQLite",
+      "Serve on loopback; reach the lab host via an approved SSH tunnel",
+      "Back up before reset; init-db drops and recreates tables"
+    ],
+    "evidence": "No public production deployment claimed.\nReal use needs authentication, security review, HTTPS and tested recovery.",
+    "notes": "Point to report/DEPLOYMENT.md for exact commands and troubleshooting. A cloud VM's loopback is inside the VM, so use its browser or authorized tunnel. Do not expose this identity-picker prototype to real student users. Cover deployment after architecture, as assigned to S2 in the project plan. Discuss SQLite write concurrency and measure bottlenecks before making capacity claims."
+  },
+  {
+    "title": "Eight tests verify the attendance slice",
+    "kicker": "VERIFICATION & LIMITS",
+    "speaker": "S3",
+    "seconds": 45,
+    "bullets": [
+      "Percentages, Late, no data and new submissions",
+      "Duplicate rejection, invalid status, edit audit and 48-hour lock",
+      "Selected-faculty ownership and the web form flow"
+    ],
+    "evidence": "Not established by this suite\nSecure login • SMTP • MySQL runtime\nLoad • accessibility • full role isolation",
+    "notes": "Cite the fresh verification record for this branch. Explain that PR #4 reports a different suite; those results are not main's results. A passing attendance suite is evidence of the covered behaviors, not a production-readiness certificate."
+  },
+  {
+    "title": "Keep contribution evidence reviewable",
+    "kicker": "GIT, JIRA & TEAM HANDOFFS",
+    "speaker": "S3",
+    "seconds": 40,
+    "bullets": [
+      "S1: requirements and ethics; S2: design and database",
+      "S3: implementation/tests; S4: planning and documentation",
+      "Separate branch, Jira-keyed commits and teammate PR review"
+    ],
+    "evidence": "Merged: attendance and design.\nPending at inspection: PRs #3, #4, #5.\nAllocation is not proof of equal effort.",
+    "notes": "Show the submission PR and task tracking issues once published. Explain that main is not merged automatically. Link the actual author/reviewer evidence; the role table does not certify attendance or who performed a rehearsal. S3 presents GitHub contribution evidence in the plan’s speaker order, after architecture/deployment and before S1’s ethics section."
+  },
+  {
+    "title": "A flag should start a conversation",
+    "kicker": "AAM-33 • PROFESSIONAL RESPONSIBILITY",
+    "speaker": "S1",
+    "seconds": 50,
+    "bullets": [
+      "Human review, explainable thresholds and a correction route",
+      "Protect privacy, minimize data and require appropriate consent",
+      "Check disability, approved leave and institutional policy"
+    ],
+    "evidence": "Identity picker ≠ secure login.\n75 / 65 / 40 are design assumptions.\nTeam endorsement remains pending.",
+    "notes": "Discuss supportive language and no public at-risk lists. No automatic punishment or exam exclusion should follow a threshold. Do not claim DPDP compliance, verified policy or accessibility certification. The statement proposes commitments and lists current implementation gaps."
+  },
+  {
+    "title": "Submission readiness has explicit gates",
+    "kicker": "AAM-34 / AAM-35 / AAM-37 • NEXT CHECKS",
+    "speaker": "S4 / Madiha Iram",
+    "seconds": 40,
+    "bullets": [
+      "Report, process/planning documents, guide and deck are review artifacts",
+      "Reconcile live Jira criteria and pending integration with the team",
+      "Perform a timed rehearsal; record attendance, fixes and final sign-off"
+    ],
+    "evidence": "Questions\nWhat is designed? What runs?\nWhat evidence supports each claim?",
+    "notes": "Close with the implemented attendance outcome and the broader design goal. AAM-37 is still pending until an actual rehearsal is recorded. Invite questions on process choice, data flow and the privacy limits. References: repository plan, Scrum Guide 2020, ACM Code of Ethics and Flask deployment guidance."
+  }
 ]

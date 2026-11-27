@@ -69,7 +69,41 @@ Baseline dates do not establish actual completion.
 
 **Speaker notes:** Describe the WBS support roles and the scored risk register. Report outlining can overlap development, but final results wait for a tested revision. Mention actual late preparation honestly and keep 27 November as the final-check baseline.
 
-## 5. A small app on a relational design
+## 5. Trace one scenario through the models
+
+Speaker: S2 | Target: 50 seconds
+
+DFD & BEHAVIORAL DESIGN
+
+- DFD 0: system and five actors; DFD 1: six main processes
+- DFD 2 expands risk evaluation and preserves its inputs/outputs
+- Intended flow: entry → percentage → risk → mentor support
+
+Main demonstrates entry and percentage.
+
+PR #4 proposes runtime risk and mentor flows.
+
+**Speaker notes:** Explain Level 2 fetching metrics, applying rules, comparing the current flag and raising an alert. Current state is an input for balancing. The proposed behavioral models include Normal, Warning, At-Risk, Under Intervention and Resolved; do not imply all states run on main.
+
+## 6. Live demo: 80% becomes 72.73%
+
+Speaker: S3; S1 narrates sequence | Target: 110 seconds
+
+EXECUTABLE ATTENDANCE SLICE
+
+- Dr. R. Sharma → CS501 → new 26 Nov / period 1 session
+- Mark Diya Absent: 8 attended / 11 recorded = 72.73%
+- Correct to Present: 9 / 11 = 81.82%; duplicate opens editing
+
+P + L count as attended.
+
+Main does not generate a new risk alert.
+
+Use synthetic data only.
+
+**Speaker notes:** Initialize a disposable database before the talk. Demonstrate the percentage values, duplicate/edit behavior and faculty switch if time permits. Explain the 48-hour lock with tests. If the demo fails, say so and use a clearly labeled static calculation; do not simulate a live alert. S1 briefly narrates the designed sequence and exception paths; S3 performs only the implemented attendance portion. Explain that flag, mentor intervention and Resolved transitions remain design behavior on this revision.
+
+## 7. A small app on a relational design
 
 Speaker: S2 | Target: 50 seconds
 
@@ -87,41 +121,23 @@ SMTP is a design target.
 
 **Speaker notes:** Show the existing architecture/ER exports if asked. Explain unique section/date/period and session/student constraints, foreign keys and the percentage view. Tables for a feature do not prove the feature's runtime implementation.
 
-## 6. Trace one scenario through the models
+## 8. Reproduce the demo before presenting it
 
-Speaker: S2 | Target: 50 seconds
+Speaker: S2 | Target: 40 seconds
 
-DFD & BEHAVIORAL DESIGN
+AAM-36 • DEPLOYMENT
 
-- DFD 0: system and five actors; DFD 1: six main processes
-- DFD 2 expands risk evaluation and preserves its inputs/outputs
-- Intended flow: entry → percentage → risk → mentor support
+- Create venv → install requirements → initialize synthetic SQLite
+- Serve on loopback; reach the lab host via an approved SSH tunnel
+- Back up before reset; init-db drops and recreates tables
 
-Main demonstrates entry and percentage.
+No public production deployment claimed.
 
-PR #4 proposes runtime risk and mentor flows.
+Real use needs authentication, security review, HTTPS and tested recovery.
 
-**Speaker notes:** Explain Level 2 fetching metrics, applying rules, comparing the current flag and raising an alert. Current state is an input for balancing. The proposed behavioral models include Normal, Warning, At-Risk, Under Intervention and Resolved; do not imply all states run on main.
+**Speaker notes:** Point to report/DEPLOYMENT.md for exact commands and troubleshooting. A cloud VM's loopback is inside the VM, so use its browser or authorized tunnel. Do not expose this identity-picker prototype to real student users. Cover deployment after architecture, as assigned to S2 in the project plan. Discuss SQLite write concurrency and measure bottlenecks before making capacity claims.
 
-## 7. Live demo: 80% becomes 72.73%
-
-Speaker: S3 | Target: 110 seconds
-
-EXECUTABLE ATTENDANCE SLICE
-
-- Dr. R. Sharma → CS501 → new 26 Nov / period 1 session
-- Mark Diya Absent: 8 attended / 11 recorded = 72.73%
-- Correct to Present: 9 / 11 = 81.82%; duplicate opens editing
-
-P + L count as attended.
-
-Main does not generate a new risk alert.
-
-Use synthetic data only.
-
-**Speaker notes:** Initialize a disposable database before the talk. Demonstrate the percentage values, duplicate/edit behavior and faculty switch if time permits. Explain the 48-hour lock with tests. If the demo fails, say so and use a clearly labeled static calculation; do not simulate a live alert.
-
-## 8. Eight tests verify the attendance slice
+## 9. Eight tests verify the attendance slice
 
 Speaker: S3 | Target: 45 seconds
 
@@ -139,7 +155,25 @@ Load • accessibility • full role isolation
 
 **Speaker notes:** Cite the fresh verification record for this branch. Explain that PR #4 reports a different suite; those results are not main's results. A passing attendance suite is evidence of the covered behaviors, not a production-readiness certificate.
 
-## 9. A flag should start a conversation
+## 10. Keep contribution evidence reviewable
+
+Speaker: S3 | Target: 40 seconds
+
+GIT, JIRA & TEAM HANDOFFS
+
+- S1: requirements and ethics; S2: design and database
+- S3: implementation/tests; S4: planning and documentation
+- Separate branch, Jira-keyed commits and teammate PR review
+
+Merged: attendance and design.
+
+Pending at inspection: PRs #3, #4, #5.
+
+Allocation is not proof of equal effort.
+
+**Speaker notes:** Show the submission PR and task tracking issues once published. Explain that main is not merged automatically. Link the actual author/reviewer evidence; the role table does not certify attendance or who performed a rehearsal. S3 presents GitHub contribution evidence in the plan’s speaker order, after architecture/deployment and before S1’s ethics section.
+
+## 11. A flag should start a conversation
 
 Speaker: S1 | Target: 50 seconds
 
@@ -156,40 +190,6 @@ Identity picker ≠ secure login.
 Team endorsement remains pending.
 
 **Speaker notes:** Discuss supportive language and no public at-risk lists. No automatic punishment or exam exclusion should follow a threshold. Do not claim DPDP compliance, verified policy or accessibility certification. The statement proposes commitments and lists current implementation gaps.
-
-## 10. Reproduce the demo before presenting it
-
-Speaker: S4 / Madiha Iram | Target: 40 seconds
-
-AAM-36 • DEPLOYMENT
-
-- Create venv → install requirements → initialize synthetic SQLite
-- Run tests, then serve on loopback inside the VM
-- Back up before reset; init-db drops and recreates tables
-
-No public production deployment claimed.
-
-Real use needs authentication, security review, HTTPS and tested recovery.
-
-**Speaker notes:** Point to report/DEPLOYMENT.md for exact commands and troubleshooting. A cloud VM's loopback is inside the VM, so use its browser or authorized tunnel. Do not expose this identity-picker prototype to real student users.
-
-## 11. Keep contribution evidence reviewable
-
-Speaker: S4 / Madiha Iram | Target: 40 seconds
-
-GIT, JIRA & TEAM HANDOFFS
-
-- S1: requirements and ethics; S2: design and database
-- S3: implementation/tests; S4: planning and documentation
-- Separate branch, Jira-keyed commits and teammate PR review
-
-Merged: attendance and design.
-
-Pending at inspection: PRs #3, #4, #5.
-
-Allocation is not proof of equal effort.
-
-**Speaker notes:** Show the submission PR and task tracking issues once published. Explain that main is not merged automatically. Link the actual author/reviewer evidence; the role table does not certify attendance or who performed a rehearsal.
 
 ## 12. Submission readiness has explicit gates
 

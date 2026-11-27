@@ -1,6 +1,6 @@
 # Online Student Attendance & Academic Monitoring System
 
-Software Engineering CCA project report • Prepared 26 November 2026
+Software Engineering CCA project report • Prepared 26 November 2026; checked 27 November 2026
 
 Documentation role: S4 / Madiha Iram. Team members for S1–S3 should be confirmed by the team;
 role labels are retained rather than inventing names or signatures.
@@ -144,7 +144,9 @@ The existing suite runs with `.venv/bin/python -m unittest discover -s src -v` a
 8 attendance/page tests at the inspected revision. Checks cover seeded percentages and Late,
 no-data behavior, new percentages, duplicate rejection, audit/lock behavior, invalid status,
 section ownership and the submitted-form flow. Fresh execution results and a temporary-
-database demonstration are recorded in [verification](VERIFICATION.md).
+database demonstration are recorded in [verification](VERIFICATION.md). The 27 November
+acceptance pass also checks all nine in-scope Jira descriptions, updated diagrams in the report
+and slides, and the slide speaker order against Stage 7 of the project plan.
 
 There is no main-branch verification here of secure login, student data isolation, risk and
 marks behavior, SMTP, MySQL runtime support, load performance, accessibility conformance or
@@ -167,7 +169,8 @@ endorsement. DPDP applicability and legal compliance have not been independently
 
 ## 9. Deployment, demonstration and maintenance
 
-The deployment guide covers Python/venv setup, disposable SQLite initialization, local run,
+The deployment guide covers Python/venv setup, a dedicated lab-server checkout, restricted SSH
+tunneling, disposable SQLite initialization, local run,
 expected demo values, test command, safe backup/reset and rollback. `init-db` is destructive
 and must only target a disposable database. No public service or MySQL deployment is claimed.
 The demo must use the verified revision and show only implemented behavior. Offline styling
@@ -177,20 +180,6 @@ For future scale, verify access control and database migrations first, then meas
 class writes and risk evaluation latency. Background notification delivery and indexing may
 help after measurements identify bottlenecks. Do not infer a capacity guarantee from the
 small synthetic dataset. Re-run verification whenever code is integrated.
-
-## 10. Contributions and submission readiness
-
-| Role | Planned responsibility | Evidence and review |
-|---|---|---|
-| S1 | Requirements, sequence/state models, ethics | PR #3 proposal; author/team review required |
-| S2 | Architecture, DFDs, ER, schema, dictionary | Merged design PR #2; correction proposed in PR #5 |
-| S3 | Attendance, marks/risk and tests | Attendance in main; further work proposed in PR #4 |
-| S4 / Madiha Iram | Process, WBS/Gantt/risks, report, deployment, slides | This submission branch; reviewer sign-off pending |
-
-This table records work allocation and visible artifacts, not equal effort, individual
-attendance or endorsement. Drafts prepared with an assistant require the named contributors'
-review. AAM-37 needs a real timed rehearsal with all speakers. Board status, institutional
-requirements, final contributor details and the actual submission receipt remain team checks.
 
 ## References and artifact index
 
@@ -207,3 +196,17 @@ requirements, final contributor details and the actual submission receipt remain
 The external links are references for team follow-up, not a claim they were independently
 validated during this repository inspection. Unverified secondary legal/attendance claims
 from the plan are not treated as institutional policy in this report.
+
+## 10. Contributions and submission readiness
+
+This table records work allocation and visible artifacts, not equal effort, individual
+attendance or endorsement. Drafts prepared with an assistant require the named contributors'
+review. AAM-37 needs a real timed rehearsal with all speakers and was deferred by the user on 27 November. Board status, institutional
+requirements, final contributor details and the actual submission receipt remain team checks.
+
+| Role | Planned responsibility | Evidence and review |
+|---|---|---|
+| S1 | Requirements, sequence/state models, ethics | PR #3 proposal; author/team review required |
+| S2 | Architecture, DFDs, ER, schema, dictionary | Merged design PR #2; correction proposed in PR #5 |
+| S3 | Attendance, marks/risk and tests | Attendance in main; further work proposed in PR #4 |
+| S4 / Madiha Iram | Process, WBS/Gantt/risks, report, deployment, slides | This submission branch; reviewer sign-off pending |
