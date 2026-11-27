@@ -23,6 +23,46 @@
   {% endfor %}
 </div>
 
+{% if mentees %}
+<h2 class="h5">My mentees who need attention</h2>
+<table class="table table-sm bg-white align-middle mb-4">
+  <thead><tr><th>Student</th><th>Course</th><th>Status</th><th>Why</th><th>Case</th></tr></thead>
+  <tbody>
+    {% for m in mentees %}
+      <tr><td>{{ m.full_name }} <span class="text-muted">({{ m.roll_no }})</span></td>
+        <td>{{ m.course }}</td>
+        <td>{{ m.status.replace('_', ' ').title() }}</td>
+        <td class="small">{{ m.why or '' }}</td>
+        <td>
+          {% if m.intervention_id %}
+            <div class="small">{{ m.action }} since {{ m.opened_on }}{% if m.notes %}: {{ m.notes }}{% endif %}</div>
+            <form method="post" action="{{ url_for('close_case_page', intervention_id=m.intervention_id) }}" class="d-flex gap-1 mt-1">
+              <input class="form-control form-control-sm" name="outcome" placeholder="outcome" aria-label="outcome">
+              <button class="btn btn-sm btn-outline-success">Close case</button>
+            </form>
+          {% elif m.status == 'AT_RISK' %}
+            <form method="post" action="{{ url_for('open_case_page', flag_id=m.flag_id) }}" class="d-flex gap-1">
+              <select class="form-select form-select-sm" name="action" aria-label="action">
+                {% for a in actions %}<option>{{ a }}</option>{% endfor %}
+              </select>
+              <input class="form-control form-control-sm" name="notes" placeholder="notes" aria-label="notes">
+              <button class="btn btn-sm btn-outline-primary">Open case</button>
+            </form>
+          {% endif %}
+        </td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<h2 class="h5">My notifications</h2>
+<ul class="list-group">
+  {% for n in notes %}
+    <li class="list-group-item"><span class="text-muted small">{{ n.created_at }} UTC</span><br>{{ n.message }}</li>
+  {% else %}
+    <li class="list-group-item text-muted">Nothing yet.</li>
+  {% endfor %}
+</ul>
 {% else %}
   <p class="text-muted">Pick who you are above.</p>
 {% endif %}

@@ -36,7 +36,7 @@ class AttendanceTest(unittest.TestCase):
             submit_attendance(self.db, 1, "2026-11-25", 1, 1, ALL_P, now=T0)
 
     def test_edit_within_48h_is_logged_then_locked(self):
-        sid = submit_attendance(self.db, 1, "2026-11-25", 1, 1, {**ALL_P, 1: "A"}, now=T0)
+        sid, _ = submit_attendance(self.db, 1, "2026-11-25", 1, 1, {**ALL_P, 1: "A"}, now=T0)
         edit_attendance(self.db, sid, ALL_P, user_id=2, now=T0 + timedelta(hours=47))
         self.assertEqual(attendance_pct(self.db, 1, 1), 100.0)
         log = self.db.execute("SELECT * FROM audit_log ORDER BY log_id DESC").fetchone()
