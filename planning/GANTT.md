@@ -17,19 +17,27 @@ gantt
     WBS, schedule, risks / S4        :c, 2026-11-19, 3d
     Architecture, DB, DFDs / S2      :d, 2026-11-21, 2d
     Sequence and state / S1          :e, 2026-11-22, 1d
+    Requirements and plan / M1 (gate 21; window 20–21) :milestone, 2026-11-21, 0d
     Design review / M2              :milestone, 2026-11-22, 0d
     section Sprint 2
     Attendance / S3                 :f, 2026-11-23, 1d
+    Attendance working / M3         :milestone, 2026-11-23, 0d
     Marks, risk, intervention / S3   :g, 2026-11-24, 1d
+    Marks and risk working / M4     :milestone, 2026-11-24, 0d
     Ethics / S1 + S4                :h, 2026-11-23, 2d
     Verification / S3               :i, 2026-11-25, 1d
     Deployment guide / S4 + S3       :j, 2026-11-25, 1d
     Report and slides / S4 + all    :k, 2026-11-25, 2d
     Rehearsal / all                 :l, 2026-11-26, 1d
     Submission readiness / M5       :milestone, 2026-11-26, 0d
-    section Submission
+    section Submission checkpoint (outside 19–26 Nov sprint work)
     Final checks and submission     :m, 2026-11-27, 1d
+    Submission / M6                 :milestone, 2026-11-27, 0d
 ```
+
+The chart marks all six gates. M1 retains its 20–21 November review window; its diamond
+marks the closing gate on 21 November. Sprint work ends on 26 November; M6 is the separate
+27 November submission checkpoint. Milestone markers describe the baseline, not acceptance evidence.
 
 ## Milestones and dependency gates
 

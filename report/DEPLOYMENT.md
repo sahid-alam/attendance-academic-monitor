@@ -99,3 +99,101 @@ For the submission, preserve the verified commit and demo database state. If an 
 fails, return to the verified commit on a separate checkout and use the attendance-only demo;
 retain the failed integration as a review item. The slide backup must be labeled as recorded
 or static evidence rather than presented as a live execution.
+
+## 7. Controlled lab-server procedure (not a deployment record)
+
+These are instructions for an authorized lab host, **not evidence that a server deployment
+has been performed**. Obtain the lab hostname, SSH username and access from the lab supervisor.
+Use an approved Python environment and a dedicated checkout in your own account. Replace
+`LAB_USER@LAB_HOST` below with the supplied details; never share SSH credentials in Git.
+
+From your own computer:
+
+```bash
+ssh LAB_USER@LAB_HOST
+```
+
+On the lab server (POSIX shell, Python 3.12 or a compatible installed Python):
+
+```bash
+mkdir -p "$HOME/aam-lab-demo"
+cd "$HOME/aam-lab-demo"
+git clone --branch docs/madiha-aam-submission --single-branch \
+  https://github.com/sahid-alam/attendance-academic-monitor.git app
+cd app
+git rev-parse HEAD  # retain this revision in the demo record
+python3 -m venv .venv
+.venv/bin/python -m pip install -r src/requirements.txt
+mkdir -p "$HOME/aam-lab-demo/data" "$HOME/aam-lab-demo/backups"
+chmod 700 "$HOME/aam-lab-demo/data" "$HOME/aam-lab-demo/backups"
+export DATABASE="$HOME/aam-lab-demo/data/attendance-demo.db"
+# Destructive initialization: only this disposable, synthetic demo database.
+.venv/bin/flask --app src/app.py init-db
+.venv/bin/python -m unittest discover -s src -v
+.venv/bin/flask --app src/app.py run --host 127.0.0.1 --port 5000
+```
+
+Keep this SSH terminal open while Flask runs in the foreground. This development server is
+for the supervised demo only. The identity picker **is not secure authentication**: all data
+must remain synthetic. Do not bind to `0.0.0.0`, publish a public preview, or open a firewall
+port to bypass tunnel restrictions. If the directory already exists, inspect it and reuse
+only the intended checkout; do not overwrite another person's work.
+
+In a **second terminal on your own computer**, create a loopback-only tunnel:
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:5001:127.0.0.1:5000 LAB_USER@LAB_HOST
+```
+
+Open `http://127.0.0.1:5001` on your computer and run the section 3 demonstration. The tunnel
+connects your local port 5001 to Flask's loopback port 5000 on the lab host. Only an authorized
+SSH user should have access. If tunneling is prohibited, use the lab's approved remote desktop
+and its browser at `http://127.0.0.1:5000`, or arrange a supervised local demo with the lab
+supervisor. Do not expose the prototype to the public as an alternative.
+
+### Stop, back up, restore and reset
+
+Stop Flask with **Ctrl-C in the server terminal**; stop the SSH tunnel with **Ctrl-C in the
+second terminal**. This procedure leaves no background app process. Confirm the app has stopped
+before copying or restoring SQLite. In the server checkout, with Flask stopped:
+
+```bash
+export DATABASE="$HOME/aam-lab-demo/data/attendance-demo.db"
+# SQLite backup API includes committed data even if sidecar journal files exist.
+.venv/bin/python - <<'PY'
+import os
+import sqlite3
+from datetime import datetime, timezone
+from pathlib import Path
+source = Path(os.environ['DATABASE'])
+if not source.is_file():
+    raise SystemExit('Demo database missing; check DATABASE before backup')
+backup = Path.home() / 'aam-lab-demo/backups' / (
+    'attendance-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ') + '.db'
+)
+with sqlite3.connect(f'{source.as_uri()}?mode=ro', uri=True) as src:
+    with sqlite3.connect(backup) as dst:
+        src.backup(dst)
+backup.chmod(0o600)
+print(backup)
+PY
+```
+
+For reset, confirm `DATABASE` is the dedicated `attendance-demo.db` above and preserve the
+backup first, then run `.venv/bin/flask --app src/app.py init-db` again. For restore, keep Flask
+stopped and use SQLite's backup API to copy the chosen backup into the demo database (open the
+backup read-only as the source and `DATABASE` as the destination). Avoid copying over an open
+database or leaving mismatched sidecar files. Restart with the same loopback command and verify
+the restored attendance state. Never commit either database or backup.
+
+### Fallback if the live lab demo fails
+
+1. Check SSH access, port conflicts, dependencies and `DATABASE` using the recovery table above.
+2. If the lab remains unavailable, start the same verified revision on the presenter's laptop
+   using sections 1–2 and synthetic data. Label this **local fallback**, not a lab deployment.
+3. If no live execution is possible, show the prepared screenshots/slides and recorded test
+   evidence, labeled **static / previously recorded evidence**. Explain what failed and which
+   behavior could not be demonstrated live; do not claim that the lab deployment succeeded.
+
+Record the actual host arrangement, revision, verification output and outcome only after a
+real supervised run. Server deployment and team acceptance remain pending until that happens.

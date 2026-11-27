@@ -60,3 +60,33 @@ those branches are represented as main's results.
 
 Jira acceptance criteria/statuses require live board access. Responsibility endorsement,
 teammate PR review, a real timed rehearsal and final submission receipt remain pending.
+
+## Follow-up corrections — 27 November 2026
+
+Scope: AAM-13, AAM-15, AAM-16 and AAM-36 on `docs/madiha-aam-submission`, following
+published commit `17a5469`. No application runtime changes were made. Existing report,
+slide and rehearsal exports were retained; they are outside this follow-up's scope.
+
+- `tools/build_submission.py` completed successfully. Updated planning PNGs and draw.io
+  source were retained; incidental report/presentation export changes were discarded.
+- `python -m unittest discover -s src -v`: **8/8 passed** in a fresh local virtual environment
+  (Python 3.14, Flask 3.1.0). The documented Python 3.12 lab procedure was not run on a lab host.
+- `git diff --check`: passed.
+- All 23 WBS work-package rows retain their original owners, due dates, dependencies and
+  acceptance conditions; the added week/period column separates the sprints and submission.
+- Both PNGs passed image-integrity checks and visual inspection. All six milestone gates
+  appear on the Gantt chart, including the M1 review window and separate 27 November M6.
+- Draw.io source XML validated: 19 individual shapes and 15 connectors, unique IDs and valid
+  endpoints. Its exact XML was loaded into diagrams.net through an encoded editor link;
+  an individual Sprint planning event could be selected with editable shape controls.
+  Feedback routing and the two separate review/retrospective pairs were visually inspected.
+- All **50 repository-local Markdown links** resolved.
+- PRs #3, #4 and #5 remained open and unmerged when rechecked on 27 November; main remained
+  `57c0c6a`. Attendance-only implementation claims therefore remain accurate for this branch.
+- AAM-14 justification, AAM-17 risk register and AAM-33 responsibility statement were reviewed
+  for consistency with the corrections. Team endorsement remains pending.
+
+The lab-server section is a reproducible procedure, not a deployment claim. SSH access, a
+supervised lab execution, team acceptance and actual submission still need their own evidence.
+Earlier smoke-test results above remain historical; the eight-test suite was rerun for this follow-up.
+Jira was inspected under Madiha's signed-in account; no Jira statuses were changed in this follow-up.

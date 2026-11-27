@@ -7,6 +7,7 @@ Application dependencies and runtime are unchanged.
 from pathlib import Path
 import json
 import re
+import xml.etree.ElementTree as ET
 from html import escape
 
 from PIL import Image, ImageDraw, ImageFont
@@ -56,38 +57,77 @@ def diagram_base(title, subtitle, height):
 
 
 def process_diagram():
-    im, d = diagram_base('Two-sprint Scrum process', 'AAM-13 | Baseline process, November 2026 | Planned events, not attendance evidence', 780)
-    boxes = [
-        (45, 170, 490, 415, 'SPRINT 1  /  19–22 NOV', ['Plan the sprint backlog', 'Requirements, design, plan', 'Daily progress / blocker updates', 'Review + retrospective']),
-        (575, 170, 1020, 415, 'SPRINT 2  /  23–26 NOV', ['Refine and plan backlog', 'Build, verify, write, rehearse', 'Daily progress / blocker updates', 'Review + retrospective']),
-        (1105, 170, 1550, 415, 'SUBMISSION  /  27 NOV', ['Select verified revision', 'Check artifacts and links', 'Complete team review', 'Submit; retain receipt']),
-    ]
-    for x1, y1, x2, y2, title, lines in boxes:
-        d.rounded_rectangle((x1, y1, x2, y2), radius=16, fill='white', outline='#CCD9E4', width=2)
-        diagram_text(d, (x1+22, y1+22), title, font=font(24, True), fill=TEAL)
-        for j, line in enumerate(lines):
-            diagram_text(d, (x1+22, y1+76+j*38), line, font=font(21), fill=INK)
-    for x in (500, 1030):
-        d.line((x, 285, x+65, 285), fill=TEAL, width=7)
-        d.polygon([(x+65, 285), (x+48, 274), (x+48, 296)], fill=TEAL)
-    diagram_text(d, (65, 455), 'INCREMENT 1', font=font(22, True), fill=TEAL)
-    diagram_text(d, (65, 493), 'Reviewed requirements, models and plan', font=font(24), fill=INK)
-    diagram_text(d, (595, 455), 'INCREMENT 2', font=font(22, True), fill=TEAL)
-    diagram_text(d, (595, 493), 'Tested prototype and submission pack', font=font(24), fill=INK)
-    d.rounded_rectangle((45, 565, 1550, 690), radius=14, fill='#DEEDF0')
-    diagram_text(d, (70, 580), 'FEEDBACK RETURNS TO THE BACKLOG', font=font(24, True), fill=TEAL)
-    diagram_text(d, (70, 625), 'Review findings → reprioritize tasks → next sprint / future work. Unfinished work stays visible.', font=font(23), fill=INK)
-    diagram_text(d, (45, 730), 'Source: planning/PROJECT_PLAN.md and PROCESS_MODEL.md | S4: Madiha Iram', font=font(18), fill=MUTED)
+    # One layout drives both the PNG and editable draw.io source.
+    im, d = diagram_base('Two-sprint Scrum process', 'AAM-13 | November 2026 | Planned events, not attendance evidence', 850)
+    mxfile = ET.Element('mxfile', host='app.diagrams.net')
+    diagram = ET.SubElement(mxfile, 'diagram', id='scrum', name='Two-sprint Scrum')
+    model = ET.SubElement(diagram, 'mxGraphModel', page='1', pageWidth='1600', pageHeight='850')
+    graph = ET.SubElement(model, 'root')
+    ET.SubElement(graph, 'mxCell', id='0')
+    ET.SubElement(graph, 'mxCell', id='1', parent='0')
+
+    positions = {}
+
+    def node(key, label, x, y, width=225, height=100, heading=False):
+        positions[key] = (x, y, width, height)
+        cell = ET.SubElement(graph, 'mxCell', id=key, value=label, vertex='1', parent='1',
+                             style='rounded=1;whiteSpace=wrap;html=0;fontSize=21;fillColor=#FFFFFF;strokeColor=#007F82;')
+        ET.SubElement(cell, 'mxGeometry', x=str(x), y=str(y), width=str(width), height=str(height), attrib={'as': 'geometry'})
+        d.rounded_rectangle((x,y,x+width,y+height), radius=10, fill='white', outline=TEAL, width=2)
+        for j, line in enumerate(label.split('\n')):
+            diagram_text(d, (x+12,y+14+j*28), line, font=font(21, heading), fill=INK)
+
+    def arrow(source, target, points):
+        sx, sy, sw, sh = positions[source]
+        tx, ty, tw, th = positions[target]
+        exit_x, exit_y = (points[0][0]-sx)/sw, (points[0][1]-sy)/sh
+        entry_x, entry_y = (points[-1][0]-tx)/tw, (points[-1][1]-ty)/th
+        cell = ET.SubElement(graph, 'mxCell', id=f'{source}-{target}', edge='1', parent='1', source=source, target=target,
+                             style=f'edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;strokeColor=#007F82;strokeWidth=2;exitX={exit_x};exitY={exit_y};entryX={entry_x};entryY={entry_y};')
+        geometry = ET.SubElement(cell, 'mxGeometry', relative='1', attrib={'as': 'geometry'})
+        if len(points) > 2:
+            waypoints = ET.SubElement(geometry, 'Array', attrib={'as': 'points'})
+            for x, y in points[1:-1]:
+                ET.SubElement(waypoints, 'mxPoint', x=str(x), y=str(y))
+        d.line(points, fill=TEAL, width=4)
+        x,y=points[-1]; px,py=points[-2]
+        if x > px:
+            d.polygon([(x,y),(x-10,y-7),(x-10,y+7)], fill=TEAL)
+        elif y > py:
+            d.polygon([(x,y),(x-7,y-10),(x+7,y-10)], fill=TEAL)
+        else:
+            d.polygon([(x,y),(x-7,y+10),(x+7,y+10)], fill=TEAL)
+
+    node('title', 'Two-sprint Scrum / November 2026\nAAM-13 | Planned events, not attendance evidence', 45, 20, 1500, 90, True)
+    for sprint, y, dates, work in [(1,210,'19–22 Nov 2026','Requirements, design, planning'),
+                                    (2,490,'23–26 Nov 2026','Build and test')]:
+        node(f's{sprint}-heading', f'Sprint {sprint}: {dates} / {work}',45,y-70,1500,55,True)
+        labels=['Backlog', 'Sprint planning', f'Sprint {sprint}\nDaily updates', 'Review', 'Retrospective', 'Backlog\nrefinement']
+        for i,label in enumerate(labels):
+            node(f's{sprint}-{i}',label,45+i*255,y)
+            if i:
+                arrow(f's{sprint}-{i-1}',f's{sprint}-{i}',[(45+(i-1)*255+225,y+50),(45+i*255,y+50)])
+    arrow('s1-5','s2-0',[(1432,310),(1432,345),(25,345),(25,540),(45,540)])
+    node('increment1','Increment 1: reviewed requirements, models and plan',45,365,1500,45)
+    arrow('s1-3','increment1',[(922,310),(922,365)])
+    node('increment2','Increment 2: tested prototype and submission artifacts',45,625,1500,55)
+    node('submission','27 Nov: final checks and submission checkpoint; retain receipt',45,720,1500,60)
+    arrow('s2-5','s1-0',[(1545,540),(1575,540),(1575,190),(157,190),(157,210)])
+    arrow('s2-3','increment2',[(922,590),(922,625)])
+    arrow('increment2','submission',[(795,680),(795,720)])
+    node('feedback-note','Feedback refines the next backlog; unfinished work stays visible. S4: Madiha Iram',45,800,1500,40)
+    ET.indent(mxfile)
+    ET.ElementTree(mxfile).write(ROOT / 'planning/process-model.drawio', encoding='utf-8', xml_declaration=True)
     im.save(ROOT / 'planning/process-model.png')
 
 
 def gantt_diagram():
-    im, d = diagram_base('Baseline schedule: 19–27 November', 'AAM-16 | Calendar days | Original plan; actual completion must be recorded separately', 955)
+    im, d = diagram_base('Baseline schedule: 19–27 November', 'AAM-16 | Sprint work: 19–26 Nov | 27 Nov: submission checkpoint | Planned dates', 1400)
     x0, cell, y0, rowh = 540, 110, 235, 51
     diagram_text(d, (45, 155), 'WORK PACKAGE / OWNER', font=font(22, True), fill=INK)
     for i in range(9):
         diagram_text(d, (x0+i*cell+17, 155), str(19+i), font=font(25, True), fill=INK)
-        d.line((x0+i*cell, 200, x0+i*cell, 830), fill='#D5DFE8', width=1)
+        d.line((x0+i*cell, 200, x0+i*cell, 1260), fill='#D5DFE8', width=1)
     tasks = [('Requirements / S1', 19, 21), ('Process model / S4', 19, 20), ('WBS, schedule, risks / S4', 19, 21),
              ('Design + models / S2, S1', 21, 22), ('Attendance / S3', 23, 23),
              ('Marks, risk, cases / S3', 24, 24), ('Ethics / S1, S4', 23, 24),
@@ -98,8 +138,18 @@ def gantt_diagram():
         diagram_text(d, (45, y), title, font=font(22), fill=INK)
         d.rounded_rectangle((x0+(start-19)*cell+5, y, x0+(end-18)*cell-10, y+31), radius=6,
                             fill=TEAL if start < 23 else '#4767AE')
-    diagram_text(d, (45, 845), 'Sprint 1: 19–22 Nov     |     Sprint 2: 23–26 Nov     |     Final submission: 27 Nov', font=font(23, True), fill=TEAL)
-    diagram_text(d, (45, 895), 'See WBS.md for predecessors. Late preparation on 26 Nov does not change the baseline.', font=font(21), fill=MUTED)
+    milestones = [('M1 Requirements + plan (20–21 Nov)',20,21), ('M2 Design review',22,22),
+                  ('M3 Attendance working',23,23), ('M4 Marks / risk working',24,24),
+                  ('M5 Submission readiness',26,26), ('M6 Submission checkpoint',27,27)]
+    for i,(label,start,end) in enumerate(milestones):
+        y=825+i*68
+        diagram_text(d,(45,y-12),label,font=font(21,True),fill=INK)
+        x=x0+(end-19)*cell+cell//2
+        if start != end:
+            d.line((x0+(start-19)*cell+cell//2,y,x,y),fill='#AA4925',width=5)
+        d.polygon([(x,y-12),(x+12,y),(x,y+12),(x-12,y)],fill='#AA4925')
+    diagram_text(d, (45, 1285), 'Diamonds: milestone gates. M1 spans 20–21 Nov; diamond at the 21 Nov gate.',font=font(22),fill=TEAL)
+    diagram_text(d, (45, 1330), 'Sprint 1: 19–22 Nov | Sprint 2: 23–26 Nov | Submission: 27 Nov. See WBS.md for dependencies.',font=font(21),fill=MUTED)
     im.save(ROOT / 'planning/gantt.png')
 
 
