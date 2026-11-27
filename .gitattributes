@@ -1,0 +1,4 @@
+# Exported submission artifacts are binary; review their editable sources.
+*.pdf binary
+*.pptx binary
+*.png binary

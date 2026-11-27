@@ -1,0 +1,16 @@
+{
+  "verified_at": "2026-11-27T11:12:45+05:30",
+  "base_commit": "57c0c6a7cbf54fa9b923b767548a1f4d4e47eb2b",
+  "database": "Temporary synthetic SQLite database, deleted after run",
+  "checks": {
+    "flask_cli_init_db": "pass",
+    "home_get_200": "pass",
+    "seed_diya_pct": 80.0,
+    "after_absent_pct": 72.73,
+    "duplicate_redirect_to_edit": "pass",
+    "corrected_present_pct": 81.82,
+    "audit_old_A_new_P": "pass",
+    "other_faculty_section_status": 403
+  },
+  "limitations": "Flask test client, not a browser, public deployment or real team rehearsal"
+}

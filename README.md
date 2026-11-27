@@ -1,7 +1,8 @@
 # Online Student Attendance & Academic Monitoring System
 
-A web app for a college to record attendance and internal marks in one place.
-It flags students who are falling behind early and shows the reason for each flag, so their mentor can step in before exam eligibility is checked.
+A Flask/SQLite attendance prototype for a college, with a broader academic-monitoring design.
+The current runtime records attendance and percentages. Marks, risk alerts and mentor workflows
+are proposed in separate open PRs; they are not implemented on this documented main baseline.
 This is our 4-person Software Engineering CCA team project.
 
 ## Team
@@ -11,7 +12,7 @@ This is our 4-person Software Engineering CCA team project.
 | Student 1 (TBD) | Requirements & Analysis |
 | Student 2 (TBD) | Design & Database |
 | Student 3 (TBD) | Development & Testing |
-| Student 4 (TBD) | Project Management & Documentation |
+| Madiha Iram (S4) | Project Management & Documentation |
 
 ## Process model
 
@@ -22,7 +23,7 @@ Agile Scrum with 2 sprints. Sprint 1 (19 to 22 Nov) is requirements, design and 
 - **Jira** for the task board, project key `AAM`
 - **GitHub** for code, docs and reviews
 - **draw.io** for the diagrams
-- **Flask, MySQL and Bootstrap** for the app (SQLite during development)
+- **Flask, SQLite and Bootstrap** for the runnable prototype; MySQL DDL is a design artifact
 
 ## Folder structure
 
@@ -30,7 +31,7 @@ Agile Scrum with 2 sprints. Sprint 1 (19 to 22 Nov) is requirements, design and 
 |---|---|
 | `requirements/` | SRS, use cases, survey |
 | `planning/` | Project plan, WBS, Gantt chart, risks, Jira exports |
-| `diagrams/` | `.drawio` sources and `.png` exports |
+| `diagrams/` | Design PNG exports and data dictionary (editable process source is in `planning/`) |
 | `src/` | App code and tests |
 | `report/` | The report |
 | `presentation/` | The slides |
@@ -45,11 +46,23 @@ Use made-up data only. Never commit real student data, passwords or `.env` files
 
 ## Setup
 
-Setup steps for `src/` are coming in Sprint 2.
+Follow the [deployment and demo guide](report/DEPLOYMENT.md) for the verified Flask/SQLite attendance prototype. It uses synthetic data and a demo identity picker.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r src/requirements.txt
+.venv/bin/flask --app src/app.py init-db  # destructive reset: disposable demo database only
+.venv/bin/flask --app src/app.py run --host 127.0.0.1 --port 5000
+.venv/bin/python -m unittest discover -s src -v
+```
 
 ## Links
 
-- Jira board: (link coming)
+- [Jira backlog](https://sahidsworkspace-39968046.atlassian.net/jira/software/projects/AAM/boards/2/backlog) (workspace membership required)
+- [S4 deliverable checklist](planning/DELIVERY_CHECKLIST.md)
+- [Final report](report/FINAL_REPORT.md) / [PDF](report/FINAL_REPORT.pdf)
+- [Slide deck](presentation/AAM_PRESENTATION.pptx) / [PDF](presentation/AAM_PRESENTATION.pdf)
+- [Verification evidence](report/VERIFICATION.md)
 
 ## License
 
